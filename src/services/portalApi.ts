@@ -1,0 +1,34 @@
+import type { AnalyticsSummary, Branding, Template } from '../types/portal';
+
+async function api<T>(input: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(input, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  const json = (await response.json()) as { data?: T; error?: { message?: string } };
+  if (!response.ok) {
+    throw new Error(json.error?.message ?? `Request failed (${response.status})`);
+  }
+
+  return (json.data ?? json) as T;
+}
+
+export const portalApi = {
+  getBranding: () => api<Branding>('/api/portal/branding'),
+  saveBranding: (payload: Record<string, unknown>) => api<Branding>('/api/portal/branding', { method: 'PUT', body: JSON.stringify(payload) }),
+  publishBranding: () => api<Branding>('/api/portal/branding?action=publish', { method: 'POST' }),
+
+  listTemplates: (status = 'all') => api<Template[]>(`/api/portal/templates?status=${encodeURIComponent(status)}`),
+  createTemplate: (payload: Record<string, unknown>) => api<Template>('/api/portal/templates', { method: 'POST', body: JSON.stringify(payload) }),
+  getTemplate: (id: string) => api<Template>(`/api/portal/template?id=${encodeURIComponent(id)}`),
+  updateTemplate: (id: string, payload: Record<string, unknown>) => api<Template>(`/api/portal/template?id=${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  templateAction: (id: string, action: 'publish' | 'archive' | 'unarchive' | 'duplicate') => api<Template>(`/api/portal/template?id=${encodeURIComponent(id)}&action=${action}`, { method: 'POST' }),
+
+  getAnalyticsSummary: (dateFrom: string, dateTo: string) => api<AnalyticsSummary>(`/api/portal/analytics-summary?dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}`),
+
+  uploadAsset: (payload: { assetType: string; filename: string; contentType: string; dataBase64: string }) => api<{ url: string; pathname: string }>('/api/portal/assets-upload', { method: 'POST', body: JSON.stringify(payload) }),
+};

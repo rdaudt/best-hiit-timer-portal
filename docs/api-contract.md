@@ -1,7 +1,7 @@
-# Portal API Contract (Phase 2-3)
+# Portal API Contract (Phase 2-6)
 
 ## Authentication
-All `/api/portal/*` endpoints require authenticated session cookie and workspace resolution by `owner_google_sub`.
+All `/api/portal/*` endpoints require authenticated session cookie unless explicitly noted as ingest/cron integration endpoint.
 
 ## Error Envelope
 ```json
@@ -16,28 +16,26 @@ All `/api/portal/*` endpoints require authenticated session cookie and workspace
 
 ## Endpoints
 - `GET /api/portal/workspace`
-  - Returns resolved actor and workspace identity.
 - `GET /api/portal/branding`
-  - Returns workspace branding/profile state.
 - `PUT /api/portal/branding`
-  - Updates branding using optimistic concurrency (`expectedUpdatedAt`) and enforces tenant-owned asset references.
 - `POST /api/portal/branding?action=publish`
-  - Publishes workspace branding (`status=published`).
 - `GET /api/portal/templates?status=all|draft|published|archived`
-  - Lists workspace templates filtered by status.
 - `POST /api/portal/templates`
-  - Creates a draft template.
 - `GET /api/portal/template?id={templateId}`
-  - Loads one template (workspace-scoped).
 - `PUT /api/portal/template?id={templateId}`
-  - Updates one template with optimistic concurrency (`expectedUpdatedAt`).
 - `POST /api/portal/template?id={templateId}&action=publish|archive|unarchive|duplicate`
-  - Executes template lifecycle action.
 - `POST /api/portal/assets-upload`
-  - Uploads binary data to Vercel Blob into a tenant-prefixed path: `tenants/{workspaceId}/...`.
+- `GET /api/portal/analytics-summary?dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD`
+
+Integration endpoints:
+- `POST /api/portal/analytics-ingest`
+  - Requires `tenantSlug`, `eventName`; optionally secured by `Authorization: Bearer <ANALYTICS_INGEST_SECRET>`.
+- `GET|POST /api/portal/analytics-rollup`
+  - Requires `Authorization: Bearer <CRON_SECRET>`.
 
 ## Tenant Safety
-- No endpoint accepts a client-provided tenant/workspace identifier for authorization.
-- All record reads/writes are bound to session-resolved `workspaceId` in SQL `WHERE` clauses.
-- Blob uploads are forced to tenant-prefixed paths.
-- Branding asset URLs are rejected if they do not map to the authenticated workspace blob prefix.
+- No protected endpoint accepts client-provided tenant ids for authorization.
+- SQL reads/writes are bound to session-resolved workspace ids.
+- Blob uploads use server-generated paths under `tenants/{workspaceId}/...`.
+- Branding asset URLs must map to authenticated workspace prefix.
+- Analytics summary reads only the authenticated workspace tenant_id.

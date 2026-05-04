@@ -1,8 +1,10 @@
-import { decodeJwt } from 'jose';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 type TokenResponse = {
   id_token: string;
 };
+
+const googleJwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 
 const requireEnv = (name: string): string => {
   const value = process.env[name]?.trim();
@@ -48,9 +50,14 @@ export async function exchangeCodeForIdentity(code: string) {
   }
 
   const json = (await response.json()) as TokenResponse;
-  const idToken = decodeJwt(json.id_token);
-  const sub = String(idToken.sub ?? '');
-  const email = String(idToken.email ?? '');
+  const clientId = requireEnv('GOOGLE_CLIENT_ID');
+  const verified = await jwtVerify(json.id_token, googleJwks, {
+    issuer: ['https://accounts.google.com', 'accounts.google.com'],
+    audience: clientId,
+  });
+
+  const sub = String(verified.payload.sub ?? '');
+  const email = String(verified.payload.email ?? '');
 
   if (!sub || !email) {
     throw new Error('Missing subject/email in Google ID token.');

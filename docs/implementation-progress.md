@@ -10,40 +10,33 @@
 - [x] Phase 0-1: Foundation + Auth shell
 - [x] Phase 2: Turso data + portal write APIs
 - [x] Phase 3: Blob storage tenant safety
-- [ ] Phase 4: Portal UI features
-- [ ] Phase 5: Coach-scoped analytics
-- [ ] Phase 6: Hardening + launch readiness
+- [x] Phase 4: Portal UI features
+- [x] Phase 5: Coach-scoped analytics
+- [x] Phase 6: Hardening + launch readiness
 
-## Phase 0-1 Outcomes
-- Scaffolded React+TS+Vite app with lint/test/build scripts.
-- Added Vitest + Testing Library baseline.
-- Added CI workflow running lint/test/build.
-- Added `.env.example` and README architecture summary.
-- Implemented auth shell with protected route + sign-in/out UX.
-- Implemented API auth session endpoints and workspace guard endpoint.
+## Phase 4 Outcomes
+- Implemented portal app shell with protected navigation.
+- Added Dashboard, Branding, Templates list, and Template Editor pages.
+- Wired UI flows to portal APIs for branding save/publish and template lifecycle actions.
+- Added tenant asset uploads in branding UX.
 
-## Phase 2 Outcomes
-- Aligned Turso schema for portal admin fields and audit metadata in `coach_tenants` and `coach_templates`.
-- Added column-safe migration logic (`ALTER TABLE ... ADD COLUMN` when missing).
-- Added standardized API error envelope.
-- Added portal branding API (`GET`, `PUT`, `POST?action=publish`) with optimistic concurrency check.
-- Added portal templates APIs for list/create, detail/update, and lifecycle actions (publish/archive/unarchive/duplicate).
-- Enforced workspace-scoped SQL predicates for all template/branding writes and reads.
-- Added API contract doc and endpoint behavior summary.
+## Phase 5 Outcomes
+- Added tenant-aware analytics ingestion endpoint.
+- Added cron-secured daily analytics rollup endpoint.
+- Added authenticated, workspace-scoped analytics summary endpoint with date filtering.
+- Wired dashboard date-range filters and trend/metric rendering.
 
-## Phase 3 Outcomes
-- Added tenant asset helper utilities for prefixed blob paths and ownership checks.
-- Added authenticated blob upload endpoint: `POST /api/portal/assets-upload`.
-- Enforced tenant-prefixed storage keys (`tenants/{workspaceId}/...`) on uploads.
-- Added branding asset ownership guard that rejects cross-tenant asset URLs.
-- Added negative tests for cross-tenant asset references and upload auth checks.
+## Phase 6 Outcomes
+- Hardened Google OIDC callback with JWT signature verification via Google JWKS.
+- Added analytics and tenant-safety endpoint tests.
+- Added operational runbook and final env matrix.
+- Added analytics DB indexes and tenant-safe query patterns.
 
 ## Test Outcomes
 - `npm run lint` passes.
-- `npm run test` passes (9 tests).
+- `npm run test` passes.
 - `npm run build` passes.
 
-## Risks / Blockers
-- OIDC callback currently decodes ID token claims but does not yet verify signature against Google JWKS.
-- Workspace bootstrap/admin onboarding flow not implemented; existing workspace record is required.
-- Upload API currently accepts base64 payloads directly; a signed direct-upload flow could reduce API memory pressure in future.
+## Residual Risks
+- Analytics ingest assumes slug is provided correctly by timer app integration; rollout should include contract validation in timer app.
+- Asset upload currently uses base64 API relay; direct signed uploads may be preferable at scale.

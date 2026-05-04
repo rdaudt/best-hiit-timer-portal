@@ -95,6 +95,7 @@ export async function createCoachTenantTablesIfNeeded() {
       );
     `,
     `CREATE INDEX IF NOT EXISTS idx_coach_tenants_owner_sub ON coach_tenants(owner_google_sub);`,
+    `CREATE INDEX IF NOT EXISTS idx_coach_tenants_slug ON coach_tenants(slug);`,
     `CREATE INDEX IF NOT EXISTS idx_coach_templates_tenant_status_sort ON coach_templates (tenant_id, status, sort_order);`,
   ], 'write');
 
@@ -115,11 +116,64 @@ export async function createCoachTenantTablesIfNeeded() {
   await addColumnIfMissing('coach_templates', 'updated_by_email TEXT', 'updated_by_email');
 }
 
+export async function createAnalyticsTablesIfNeeded() {
+  const db = getDb();
+  await db.batch([
+    `
+      CREATE TABLE IF NOT EXISTS analytics_events (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        event_name TEXT NOT NULL,
+        occurred_at TEXT NOT NULL,
+        payload_json TEXT NOT NULL DEFAULT '{}'
+      );
+    `,
+    `
+      CREATE TABLE IF NOT EXISTS analytics_rollup_daily (
+        tenant_id TEXT NOT NULL,
+        day_utc TEXT NOT NULL,
+        app_opened_count INTEGER NOT NULL DEFAULT 0,
+        timer_created_count INTEGER NOT NULL DEFAULT 0,
+        timer_run_completed_count INTEGER NOT NULL DEFAULT 0,
+        timer_run_incomplete_count INTEGER NOT NULL DEFAULT 0,
+        timer_created_from_template_count INTEGER NOT NULL DEFAULT 0,
+        total_timer_duration_sec_sum INTEGER NOT NULL DEFAULT 0,
+        station_count_sum INTEGER NOT NULL DEFAULT 0,
+        rounds_per_station_sum INTEGER NOT NULL DEFAULT 0,
+        work_sec_sum INTEGER NOT NULL DEFAULT 0,
+        rest_sec_sum INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (tenant_id, day_utc)
+      );
+    `,
+    `CREATE INDEX IF NOT EXISTS idx_analytics_events_tenant_time ON analytics_events(tenant_id, occurred_at);`,
+    `CREATE INDEX IF NOT EXISTS idx_analytics_events_name ON analytics_events(event_name);`,
+    `CREATE INDEX IF NOT EXISTS idx_analytics_rollup_tenant_day ON analytics_rollup_daily(tenant_id, day_utc);`,
+  ], 'write');
+}
+
 export async function findWorkspaceByGoogleSub(sub: string) {
   const db = getDb();
   const result = await db.execute({
     sql: `SELECT id, slug FROM coach_tenants WHERE owner_google_sub = ? LIMIT 1`,
     args: [sub],
+  });
+  const row = result.rows[0] as Record<string, unknown> | undefined;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    workspaceId: String(row.id),
+    workspaceSlug: String(row.slug),
+  };
+}
+
+export async function findWorkspaceBySlug(slug: string) {
+  const db = getDb();
+  const result = await db.execute({
+    sql: `SELECT id, slug FROM coach_tenants WHERE slug = ? LIMIT 1`,
+    args: [slug],
   });
   const row = result.rows[0] as Record<string, unknown> | undefined;
   if (!row) {
