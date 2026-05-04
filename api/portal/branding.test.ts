@@ -70,4 +70,31 @@ describe('portal branding api', () => {
 
     expect(res.payload.code).toBe(409);
   });
+
+  it('returns 403 for cross-tenant asset references', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    vi.mocked(getDb).mockReturnValue({ execute: vi.fn() } as never);
+
+    const res = makeRes();
+    await handler({
+      method: 'PUT',
+      body: {
+        businessName: 'ND',
+        coachName: 'Coach',
+        bio: '',
+        logoUrl: 'https://blob.vercel-storage.com/tenants/w2/branding/logo.png',
+        coachPhotoUrl: '',
+        qrCodeUrl: '',
+        themePrimaryColor: '#ffffff',
+        themeSecondaryColor: '#000000',
+        brandHeadline: '',
+        expectedUpdatedAt: '2026-02-01T00:00:00.000Z',
+      },
+    }, res as never);
+
+    expect(res.payload.code).toBe(403);
+  });
 });

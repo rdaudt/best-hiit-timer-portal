@@ -1,6 +1,7 @@
 import { getDb } from '../_db.js';
 import { requirePortalSession } from '../_portalAuth.js';
 import { errorResponse, nowIso, type NodeReq, type NodeRes } from '../_http.js';
+import { validateTenantAssetRefs } from '../_assets.js';
 
 type BrandingUpdate = {
   businessName: string;
@@ -90,6 +91,10 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     }
     if (!validateHexColor(payload.themePrimaryColor) || !validateHexColor(payload.themeSecondaryColor)) {
       res.status(400).json(errorResponse('VALIDATION_ERROR', 'Theme colors must be #RRGGBB.'));
+      return;
+    }
+    if (!validateTenantAssetRefs([payload.logoUrl, payload.coachPhotoUrl, payload.qrCodeUrl], auth.session.workspaceId)) {
+      res.status(403).json(errorResponse('TENANT_ASSET_FORBIDDEN', 'Asset references must belong to your workspace storage prefix.'));
       return;
     }
 
