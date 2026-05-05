@@ -9,9 +9,21 @@ async function api<T>(input: string, init?: RequestInit): Promise<T> {
     },
   });
 
-  const json = (await response.json()) as { data?: T; error?: { message?: string } };
+  const raw = await response.text();
+  let json: { data?: T; error?: { message?: string } } | null;
+  try {
+    json = JSON.parse(raw) as { data?: T; error?: { message?: string } };
+  } catch {
+    json = null;
+  }
+
   if (!response.ok) {
-    throw new Error(json.error?.message ?? `Request failed (${response.status})`);
+    const message = json?.error?.message ?? raw.slice(0, 160) ?? `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+
+  if (!json) {
+    throw new Error('API returned non-JSON success response.');
   }
 
   return (json.data ?? json) as T;

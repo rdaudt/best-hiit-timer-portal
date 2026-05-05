@@ -1,4 +1,4 @@
-import { createClient } from '@libsql/client/web';
+import { createClient } from '@libsql/client';
 
 let cachedClient: ReturnType<typeof createClient> | null = null;
 

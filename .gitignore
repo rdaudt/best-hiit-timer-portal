@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+
+# local OAuth secrets
+client_secret_*.apps.googleusercontent.com.json
+backend-setup-values.txt
+

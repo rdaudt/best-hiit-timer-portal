@@ -29,7 +29,11 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     const identity = await exchangeCodeForIdentity(code);
     const workspace = await findWorkspaceByGoogleSub(identity.sub);
     if (!workspace) {
-      res.status(403).json({ error: 'No workspace found for this account.' });
+      res.status(403).json({
+        error: 'No workspace found for this account.',
+        sub: identity.sub,
+        email: identity.email,
+      });
       return;
     }
 
@@ -41,6 +45,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     res.redirect(302, redirectTo.startsWith('/') ? redirectTo : '/');
   } catch (error) {
     console.error('auth callback failed', error);
-    res.status(500).json({ error: 'Failed to sign in.' });
+    const message = error instanceof Error ? error.message : 'Unknown sign-in failure.';
+    res.status(500).json({ error: `Failed to sign in: ${message}` });
   }
 }

@@ -1,4 +1,4 @@
-# best-hiit-timer-portal Setup Guide
+﻿# best-hiit-timer-portal Setup Guide
 > Status: Drafted on May 4, 2026
 
 ## 1. Goal and Architecture Decisions
@@ -98,7 +98,7 @@ Use these criteria:
 Both apps share backend resources, but remain tenant-safe.
 
 ### 4.1 Shared database rules
-- Portal and timer app use the same database platform.
+- Portal and timer app use the same database platform (`nodoubt-analytics`).
 - Every read/write path must enforce coach workspace isolation.
 - Cross-tenant data access is disallowed by default.
 
@@ -202,7 +202,7 @@ Timer app (existing):
 - no end-user auth variables required for timer frontend
 
 Shared backend platform:
-- shared DB connection/config
+- shared DB connection/config (shared Turso DB: `nodoubt-analytics`)
 - shared object store config
 - analytics pipeline/cron secrets as applicable
 
@@ -234,3 +234,5 @@ Use this rule:
 3. Implement Google auth shell before any major UI porting.
 4. Port first template-management UX slice using the porting checklist.
 5. Add shared-backend smoke checks with coach-tenant scoping.
+
+
