@@ -9,7 +9,7 @@ vi.mock('../_db.js', () => ({
   createCoachTenantTablesIfNeeded: vi.fn(),
   createWorkspaceForOwner: vi.fn(),
   findWorkspaceByGoogleSub: vi.fn(),
-  findWorkspaceBySlug: vi.fn(),
+  workspaceSlugExists: vi.fn(),
 }));
 
 vi.mock('../_session.js', () => ({
@@ -18,7 +18,7 @@ vi.mock('../_session.js', () => ({
 }));
 
 import { exchangeCodeForIdentity } from '../_oidc.js';
-import { createWorkspaceForOwner, findWorkspaceByGoogleSub, findWorkspaceBySlug } from '../_db.js';
+import { createWorkspaceForOwner, findWorkspaceByGoogleSub, workspaceSlugExists } from '../_db.js';
 
 function makeRes() {
   const payload: { code?: number; redirectUrl?: string; headers?: Record<string, string | string[]>; body?: unknown } = {};
@@ -56,8 +56,8 @@ describe('auth callback', () => {
     vi.mocked(findWorkspaceByGoogleSub)
       .mockResolvedValueOnce(null as never)
       .mockResolvedValueOnce({ workspaceId: 'w1', workspaceSlug: 'coach' } as never);
-    vi.mocked(findWorkspaceBySlug).mockResolvedValue(null as never);
-    vi.mocked(createWorkspaceForOwner).mockResolvedValue({ workspaceId: 'w1', workspaceSlug: 'coach' } as never);
+    vi.mocked(workspaceSlugExists).mockResolvedValue(false as never);
+    vi.mocked(createWorkspaceForOwner).mockResolvedValue({ workspaceId: 'w1', workspaceSlug: 'coach', deletedAt: null } as never);
 
     const res = makeRes();
     await handler({ method: 'GET', query: { code: 'c1', state: 'state123:%2F' }, headers: { cookie: 'oidc_state=state123' } }, res as never);
@@ -65,5 +65,22 @@ describe('auth callback', () => {
     expect(createWorkspaceForOwner).toHaveBeenCalled();
     expect(res.payload.code).toBe(302);
     expect(res.payload.redirectUrl).toBe('/');
+  });
+
+  it('skips slug owned by deleted workspace when generating new slug', async () => {
+    vi.mocked(exchangeCodeForIdentity).mockResolvedValue({ sub: 'sub1', email: 'coach@example.com' } as never);
+    vi.mocked(findWorkspaceByGoogleSub)
+      .mockResolvedValueOnce(null as never)
+      .mockResolvedValueOnce({ workspaceId: 'w2', workspaceSlug: 'coach-2', deletedAt: null } as never);
+    vi.mocked(workspaceSlugExists)
+      .mockResolvedValueOnce(true as never)
+      .mockResolvedValueOnce(false as never);
+    vi.mocked(createWorkspaceForOwner).mockResolvedValue({ workspaceId: 'w2', workspaceSlug: 'coach-2', deletedAt: null } as never);
+
+    const res = makeRes();
+    await handler({ method: 'GET', query: { code: 'c1', state: 'state123:%2F' }, headers: { cookie: 'oidc_state=state123' } }, res as never);
+
+    expect(createWorkspaceForOwner).toHaveBeenCalledWith(expect.objectContaining({ slug: 'coach-2' }));
+    expect(res.payload.code).toBe(302);
   });
 });

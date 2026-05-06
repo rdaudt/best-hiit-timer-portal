@@ -1,5 +1,5 @@
 import { exchangeCodeForIdentity } from '../_oidc.js';
-import { createCoachTenantTablesIfNeeded, createWorkspaceForOwner, findWorkspaceByGoogleSub, findWorkspaceBySlug } from '../_db.js';
+import { createCoachTenantTablesIfNeeded, createWorkspaceForOwner, findWorkspaceByGoogleSub, workspaceSlugExists } from '../_db.js';
 import { createSessionCookie, readCookie } from '../_session.js';
 
 type NodeReq = { method?: string; query?: Record<string, string | string[]>; headers?: Record<string, string | string[] | undefined> };
@@ -25,8 +25,8 @@ async function generateAvailableSlug(email: string) {
   for (let i = 0; i < 100; i += 1) {
     const suffix = i === 0 ? '' : `-${i + 1}`;
     const slug = `${base}${suffix}`.slice(0, 40).replace(/-$/g, '') || 'coach';
-    const existing = await findWorkspaceBySlug(slug);
-    if (!existing) {
+    const exists = await workspaceSlugExists(slug);
+    if (!exists) {
       return slug;
     }
   }

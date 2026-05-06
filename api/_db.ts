@@ -196,6 +196,15 @@ export async function findWorkspaceBySlug(slug: string) {
   };
 }
 
+export async function workspaceSlugExists(slug: string) {
+  const db = getDb();
+  const result = await db.execute({
+    sql: `SELECT 1 AS exists_flag FROM coach_tenants WHERE slug = ? LIMIT 1`,
+    args: [slug],
+  });
+  return result.rows.length > 0;
+}
+
 type CreateWorkspaceArgs = {
   ownerGoogleSub: string;
   ownerEmail: string;
