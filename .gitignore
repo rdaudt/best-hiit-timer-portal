@@ -30,3 +30,4 @@ dist-ssr
 client_secret_*.apps.googleusercontent.com.json
 backend-setup-values.txt
 
+.env*.local

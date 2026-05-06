@@ -59,6 +59,7 @@ export function BrandingPage() {
     if (!branding) return;
     if (assetType === 'logo') setBranding({ ...branding, logoUrl: uploaded.url });
     if (assetType === 'coach-photo') setBranding({ ...branding, coachPhotoUrl: uploaded.url });
+    if (assetType === 'coach-header-image') setBranding({ ...branding, coachHeaderImageUrl: uploaded.url });
     if (assetType === 'qr-code') setBranding({ ...branding, qrCodeUrl: uploaded.url });
   };
 
@@ -80,6 +81,7 @@ export function BrandingPage() {
       <div className="row">
         <label>Logo<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} /></label>
         <label>Coach Photo<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-photo', f); }} /></label>
+        <label>Coach Header Image<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-header-image', f); }} /></label>
         <label>QR Code<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('qr-code', f); }} /></label>
       </div>
       <div className="row">

@@ -9,6 +9,7 @@ type BrandingUpdate = {
   bio: string;
   logoUrl: string;
   coachPhotoUrl: string;
+  coachHeaderImageUrl: string;
   qrCodeUrl: string;
   themePrimaryColor: string;
   themeSecondaryColor: string;
@@ -27,6 +28,7 @@ function parsePayload(body: unknown): BrandingUpdate {
     bio: asString(obj.bio),
     logoUrl: asString(obj.logoUrl),
     coachPhotoUrl: asString(obj.coachPhotoUrl),
+    coachHeaderImageUrl: asString(obj.coachHeaderImageUrl),
     qrCodeUrl: asString(obj.qrCodeUrl),
     themePrimaryColor: asString(obj.themePrimaryColor),
     themeSecondaryColor: asString(obj.themeSecondaryColor),
@@ -48,6 +50,7 @@ function mapBranding(row: Record<string, unknown>) {
     bio: String(row.bio ?? ''),
     logoUrl: String(row.logo_url ?? ''),
     coachPhotoUrl: String(row.coach_photo_url ?? ''),
+    coachHeaderImageUrl: String(row.coach_header_image_url ?? ''),
     qrCodeUrl: String(row.qr_code_url ?? ''),
     themePrimaryColor: String(row.theme_primary_color ?? '#f97316'),
     themeSecondaryColor: String(row.theme_secondary_color ?? '#111827'),
@@ -93,7 +96,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
       res.status(400).json(errorResponse('VALIDATION_ERROR', 'Theme colors must be #RRGGBB.'));
       return;
     }
-    if (!validateTenantAssetRefs([payload.logoUrl, payload.coachPhotoUrl, payload.qrCodeUrl], auth.session.workspaceId)) {
+    if (!validateTenantAssetRefs([payload.logoUrl, payload.coachPhotoUrl, payload.coachHeaderImageUrl, payload.qrCodeUrl], auth.session.workspaceId)) {
       res.status(403).json(errorResponse('TENANT_ASSET_FORBIDDEN', 'Asset references must belong to your workspace storage prefix.'));
       return;
     }
@@ -116,7 +119,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     await db.execute({
       sql: `
         UPDATE coach_tenants
-        SET business_name = ?, coach_name = ?, bio = ?, logo_url = ?, coach_photo_url = ?, qr_code_url = ?,
+        SET business_name = ?, coach_name = ?, bio = ?, logo_url = ?, coach_photo_url = ?, coach_header_image_url = ?, qr_code_url = ?,
             theme_primary_color = ?, theme_secondary_color = ?, brand_headline = ?, updated_at = ?,
             updated_by_google_sub = ?, updated_by_email = ?
         WHERE id = ?
@@ -127,6 +130,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
         payload.bio,
         payload.logoUrl,
         payload.coachPhotoUrl,
+        payload.coachHeaderImageUrl,
         payload.qrCodeUrl,
         payload.themePrimaryColor,
         payload.themeSecondaryColor,
