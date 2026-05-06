@@ -225,5 +225,6 @@ export async function createWorkspaceForOwner(args: CreateWorkspaceArgs) {
   return {
     workspaceId: id,
     workspaceSlug: args.slug,
+    deletedAt: null,
   };
 }

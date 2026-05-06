@@ -73,15 +73,18 @@ describe('BrandingPage', () => {
   });
 
   it('disables all three while save is in flight', async () => {
-    let resolveSave: ((value: unknown) => void) | null = null;
-    vi.mocked(portalApi.saveBranding).mockImplementation(() => new Promise((resolve) => { resolveSave = resolve; }) as never);
+    let resolveSave!: (value: unknown) => void;
+    const pendingSave = new Promise((resolve) => {
+      resolveSave = resolve;
+    });
+    vi.mocked(portalApi.saveBranding).mockReturnValue(pendingSave as never);
     render(<BrandingPage />);
     fireEvent.change(await screen.findByLabelText('Business Name'), { target: { value: 'New Biz' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Unpublish' })).toBeDisabled();
-    resolveSave?.({ ...baseBranding, updatedAt: '2026-02-01T00:00:00.000Z' });
+    resolveSave({ ...baseBranding, updatedAt: '2026-02-01T00:00:00.000Z' });
   });
 
   it('clears dirty state and recalculates lifecycle availability after save', async () => {

@@ -91,6 +91,9 @@ export default async function handler(req: NodeReq, res: NodeRes) {
         workspace = latest;
       }
     }
+    if (!workspace) {
+      throw new Error('Workspace provisioning failed.');
+    }
 
     const redirectTo = decodeURIComponent(state.slice(stored.length + 1) || '/');
     res.setHeader('Set-Cookie', [
