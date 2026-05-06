@@ -4,7 +4,9 @@ Coach admin portal PWA for branding, seed templates, and coach-scoped analytics 
 
 ## Architecture Summary
 - Separate frontend repo from timer app.
-- Shared Turso database and shared object storage platform.
+- Environment-scoped backend resources:
+  - Development: isolated Turso DB + Blob store + Google OAuth client.
+  - Preview/Production: shared Turso DB + Blob store + Google OAuth client.
 - Google OIDC sign-in for coaches only.
 - Portal owns coach-write surfaces.
 - Timer app remains separate and consumes published data.
@@ -24,3 +26,5 @@ Coach admin portal PWA for branding, seed templates, and coach-scoped analytics 
 
 ## Environment
 Copy `.env.example` to `.env.local` and fill values.
+
+For deployment environment mapping, see [Environment Matrix](./docs/environment-matrix.md).

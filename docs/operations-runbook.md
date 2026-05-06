@@ -1,5 +1,10 @@
 # Operations Runbook
 
+## Environment Topology
+- `Development` has isolated resources (Turso, Blob, OAuth client, secrets).
+- `Preview` and `Production` share one resource set.
+- Reference matrix: `docs/environment-matrix.md`.
+
 ## Required Environment Variables
 - `APP_BASE_URL`
 - `GOOGLE_CLIENT_ID`
@@ -23,9 +28,10 @@
 ## Cron
 - Schedule a daily request to `GET or POST /api/portal/analytics-rollup`
 - Header: `Authorization: Bearer <CRON_SECRET>`
+- Keep `CRON_SECRET` consistent between Preview and Production in this model.
 
 ## Smoke Checks
-1. Sign in with Google and load `/` dashboard.
+1. Sign in with environment-appropriate Google client and load `/` dashboard.
 2. Save and publish branding.
 3. Upload a branding asset and verify URL prefix includes workspace tenant id.
 4. Create/edit/publish/archive a template.

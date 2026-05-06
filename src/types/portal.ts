@@ -6,6 +6,7 @@ export type Branding = {
   bio: string;
   logoUrl: string;
   coachPhotoUrl: string;
+  coachHeaderImageUrl: string;
   qrCodeUrl: string;
   themePrimaryColor: string;
   themeSecondaryColor: string;

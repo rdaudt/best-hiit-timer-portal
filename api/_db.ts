@@ -51,6 +51,7 @@ export async function createCoachTenantTablesIfNeeded() {
         bio TEXT NOT NULL DEFAULT '',
         logo_url TEXT NOT NULL DEFAULT '',
         coach_photo_url TEXT NOT NULL DEFAULT '',
+        coach_header_image_url TEXT NOT NULL DEFAULT '',
         qr_code_url TEXT NOT NULL DEFAULT '',
         theme_primary_color TEXT NOT NULL DEFAULT '#f97316',
         theme_secondary_color TEXT NOT NULL DEFAULT '#111827',
@@ -102,6 +103,7 @@ export async function createCoachTenantTablesIfNeeded() {
   await addColumnIfMissing('coach_tenants', "bio TEXT NOT NULL DEFAULT ''", 'bio');
   await addColumnIfMissing('coach_tenants', "logo_url TEXT NOT NULL DEFAULT ''", 'logo_url');
   await addColumnIfMissing('coach_tenants', "coach_photo_url TEXT NOT NULL DEFAULT ''", 'coach_photo_url');
+  await addColumnIfMissing('coach_tenants', "coach_header_image_url TEXT NOT NULL DEFAULT ''", 'coach_header_image_url');
   await addColumnIfMissing('coach_tenants', "qr_code_url TEXT NOT NULL DEFAULT ''", 'qr_code_url');
   await addColumnIfMissing('coach_tenants', "theme_primary_color TEXT NOT NULL DEFAULT '#f97316'", 'theme_primary_color');
   await addColumnIfMissing('coach_tenants', "theme_secondary_color TEXT NOT NULL DEFAULT '#111827'", 'theme_secondary_color');
