@@ -13,6 +13,7 @@ export function BrandingPage() {
   const [branding, setBranding] = useState<Branding | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -45,9 +46,38 @@ export function BrandingPage() {
 
   const publish = async () => {
     try {
+      setError('');
       const updated = await portalApi.publishBranding();
       setBranding(updated);
       setMessage('Branding published.');
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const unpublish = async () => {
+    try {
+      setError('');
+      const updated = await portalApi.unpublishBranding();
+      setBranding(updated);
+      setMessage('Branding moved back to draft.');
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const deleteProfile = async () => {
+    if (!branding) return;
+    if (deleteConfirm !== branding.slug) {
+      setError('Type your workspace slug to confirm deletion.');
+      return;
+    }
+    try {
+      setError('');
+      setMessage('');
+      await portalApi.deleteBranding();
+      await portalApi.logout();
+      window.location.assign('/signin?deleted=1');
     } catch (err) {
       setError((err as Error).message);
     }
@@ -88,6 +118,14 @@ export function BrandingPage() {
       <div className="row">
         <button className="button" onClick={() => void save()}>Save</button>
         <button className="button" onClick={() => void publish()}>Publish</button>
+        {branding.status === 'published' ? <button className="button" onClick={() => void unpublish()}>Unpublish</button> : null}
+      </div>
+      <hr />
+      <h3>Delete Profile</h3>
+      <p className="muted">This disables your workspace and signs you out. Type <strong>{branding.slug}</strong> to confirm.</p>
+      <div className="row">
+        <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value.toLowerCase())} placeholder="Type workspace slug" />
+        <button className="button danger" onClick={() => void deleteProfile()}>Delete Profile</button>
       </div>
     </section>
   );

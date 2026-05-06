@@ -39,4 +39,13 @@ describe('analytics ingest', () => {
     expect(execute).toHaveBeenCalled();
     expect(res.payload.code).toBe(202);
   });
+
+  it('returns 404 when tenant is not active', async () => {
+    vi.mocked(findWorkspaceBySlug).mockResolvedValue(null);
+    vi.mocked(getDb).mockReturnValue({ execute: vi.fn() } as never);
+
+    const res = makeRes();
+    await handler({ method: 'POST', body: { tenantSlug: 'abc', eventName: 'app_opened' } }, res as never);
+    expect(res.payload.code).toBe(404);
+  });
 });

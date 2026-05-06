@@ -61,6 +61,9 @@ export async function createCoachTenantTablesIfNeeded() {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         published_at TEXT,
+        deleted_at TEXT,
+        deleted_by_google_sub TEXT,
+        deleted_by_email TEXT,
         updated_by_google_sub TEXT,
         updated_by_email TEXT
       );
@@ -110,6 +113,9 @@ export async function createCoachTenantTablesIfNeeded() {
   await addColumnIfMissing('coach_tenants', "theme_secondary_color TEXT NOT NULL DEFAULT '#111827'", 'theme_secondary_color');
   await addColumnIfMissing('coach_tenants', "brand_headline TEXT NOT NULL DEFAULT ''", 'brand_headline');
   await addColumnIfMissing('coach_tenants', 'published_at TEXT', 'published_at');
+  await addColumnIfMissing('coach_tenants', 'deleted_at TEXT', 'deleted_at');
+  await addColumnIfMissing('coach_tenants', 'deleted_by_google_sub TEXT', 'deleted_by_google_sub');
+  await addColumnIfMissing('coach_tenants', 'deleted_by_email TEXT', 'deleted_by_email');
   await addColumnIfMissing('coach_tenants', 'updated_by_google_sub TEXT', 'updated_by_google_sub');
   await addColumnIfMissing('coach_tenants', 'updated_by_email TEXT', 'updated_by_email');
 
@@ -158,7 +164,7 @@ export async function createAnalyticsTablesIfNeeded() {
 export async function findWorkspaceByGoogleSub(sub: string) {
   const db = getDb();
   const result = await db.execute({
-    sql: `SELECT id, slug FROM coach_tenants WHERE owner_google_sub = ? LIMIT 1`,
+    sql: `SELECT id, slug, deleted_at FROM coach_tenants WHERE owner_google_sub = ? LIMIT 1`,
     args: [sub],
   });
   const row = result.rows[0] as Record<string, unknown> | undefined;
@@ -169,13 +175,14 @@ export async function findWorkspaceByGoogleSub(sub: string) {
   return {
     workspaceId: String(row.id),
     workspaceSlug: String(row.slug),
+    deletedAt: row.deleted_at ? String(row.deleted_at) : null,
   };
 }
 
 export async function findWorkspaceBySlug(slug: string) {
   const db = getDb();
   const result = await db.execute({
-    sql: `SELECT id, slug FROM coach_tenants WHERE slug = ? LIMIT 1`,
+    sql: `SELECT id, slug FROM coach_tenants WHERE slug = ? AND deleted_at IS NULL LIMIT 1`,
     args: [slug],
   });
   const row = result.rows[0] as Record<string, unknown> | undefined;

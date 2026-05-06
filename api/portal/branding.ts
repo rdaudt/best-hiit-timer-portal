@@ -64,6 +64,7 @@ function mapBranding(row: Record<string, unknown>) {
     status: String(row.status ?? 'draft'),
     updatedAt: String(row.updated_at ?? ''),
     publishedAt: row.published_at ? String(row.published_at) : null,
+    deletedAt: row.deleted_at ? String(row.deleted_at) : null,
     updatedByGoogleSub: row.updated_by_google_sub ? String(row.updated_by_google_sub) : null,
     updatedByEmail: row.updated_by_email ? String(row.updated_by_email) : null,
   };
@@ -170,21 +171,44 @@ export default async function handler(req: NodeReq, res: NodeRes) {
   }
 
   if (req.method === 'POST') {
-    const path = typeof req.query?.action === 'string' ? req.query.action : '';
-    if (path !== 'publish') {
+    const action = typeof req.query?.action === 'string' ? req.query.action : '';
+    if (action !== 'publish' && action !== 'unpublish' && action !== 'delete') {
       res.status(405).json(errorResponse('METHOD_NOT_ALLOWED', 'Method not allowed.'));
       return;
     }
 
-    const publishedAt = nowIso();
-    await db.execute({
-      sql: `
-        UPDATE coach_tenants
-        SET status = 'published', published_at = ?, updated_at = ?, updated_by_google_sub = ?, updated_by_email = ?
-        WHERE id = ?
-      `,
-      args: [publishedAt, publishedAt, auth.session.sub, auth.session.email, auth.session.workspaceId],
-    });
+    const actionAt = nowIso();
+    if (action === 'publish') {
+      await db.execute({
+        sql: `
+          UPDATE coach_tenants
+          SET status = 'published', published_at = ?, updated_at = ?, updated_by_google_sub = ?, updated_by_email = ?
+          WHERE id = ?
+        `,
+        args: [actionAt, actionAt, auth.session.sub, auth.session.email, auth.session.workspaceId],
+      });
+    }
+    if (action === 'unpublish') {
+      await db.execute({
+        sql: `
+          UPDATE coach_tenants
+          SET status = 'draft', published_at = NULL, updated_at = ?, updated_by_google_sub = ?, updated_by_email = ?
+          WHERE id = ?
+        `,
+        args: [actionAt, auth.session.sub, auth.session.email, auth.session.workspaceId],
+      });
+    }
+    if (action === 'delete') {
+      await db.execute({
+        sql: `
+          UPDATE coach_tenants
+          SET deleted_at = ?, deleted_by_google_sub = ?, deleted_by_email = ?, updated_at = ?, updated_by_google_sub = ?, updated_by_email = ?
+          WHERE id = ?
+        `,
+        args: [actionAt, auth.session.sub, auth.session.email, actionAt, auth.session.sub, auth.session.email, auth.session.workspaceId],
+      });
+    }
+
     const result = await db.execute({ sql: `SELECT * FROM coach_tenants WHERE id = ? LIMIT 1`, args: [auth.session.workspaceId] });
     res.status(200).json({ data: mapBranding(result.rows[0] as Record<string, unknown>) });
     return;

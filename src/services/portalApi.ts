@@ -33,6 +33,9 @@ export const portalApi = {
   getBranding: () => api<Branding>('/api/portal/branding'),
   saveBranding: (payload: Record<string, unknown>) => api<Branding>('/api/portal/branding', { method: 'PUT', body: JSON.stringify(payload) }),
   publishBranding: () => api<Branding>('/api/portal/branding?action=publish', { method: 'POST' }),
+  unpublishBranding: () => api<Branding>('/api/portal/branding?action=unpublish', { method: 'POST' }),
+  deleteBranding: () => api<Branding>('/api/portal/branding?action=delete', { method: 'POST' }),
+  logout: () => api<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
 
   listTemplates: (status = 'all') => api<Template[]>(`/api/portal/templates?status=${encodeURIComponent(status)}`),
   createTemplate: (payload: Record<string, unknown>) => api<Template>('/api/portal/templates', { method: 'POST', body: JSON.stringify(payload) }),

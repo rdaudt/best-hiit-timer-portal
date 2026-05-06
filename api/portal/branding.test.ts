@@ -99,4 +99,50 @@ describe('portal branding api', () => {
 
     expect(res.payload.code).toBe(403);
   });
+
+  it('unpublishes branding', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    const execute = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: 'w1', slug: 'slug', status: 'draft', published_at: null, updated_at: '2026-01-01T00:00:00.000Z' }] });
+    vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+    const res = makeRes();
+    await handler({ method: 'POST', query: { action: 'unpublish' } }, res as never);
+
+    expect(res.payload.code).toBe(200);
+    expect(execute.mock.calls[0][0].sql).toContain("status = 'draft'");
+  });
+
+  it('soft deletes branding', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    const execute = vi.fn()
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: 'w1', slug: 'slug', status: 'draft', deleted_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-01T00:00:00.000Z' }] });
+    vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+    const res = makeRes();
+    await handler({ method: 'POST', query: { action: 'delete' } }, res as never);
+
+    expect(res.payload.code).toBe(200);
+    expect(execute.mock.calls[0][0].sql).toContain('deleted_at = ?');
+  });
+
+  it('rejects unsupported POST action', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    vi.mocked(getDb).mockReturnValue({ execute: vi.fn() } as never);
+
+    const res = makeRes();
+    await handler({ method: 'POST', query: { action: 'bad' } }, res as never);
+    expect(res.payload.code).toBe(405);
+  });
 });
