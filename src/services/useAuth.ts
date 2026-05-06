@@ -25,8 +25,8 @@ export function useAuth() {
 
   const refresh = useCallback(async () => {
     try {
-      const user = await fetchSession();
-      setState({ isLoading: false, user });
+      const next = await fetchSession();
+      setState({ isLoading: false, user: next });
     } catch {
       setState({ isLoading: false, user: null });
     }

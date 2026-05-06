@@ -19,6 +19,8 @@ All `/api/portal/*` endpoints require authenticated session cookie unless explic
 - `GET /api/portal/branding`
 - `PUT /api/portal/branding`
 - `POST /api/portal/branding?action=publish`
+- `POST /api/portal/branding?action=unpublish`
+- `POST /api/portal/branding?action=delete`
 - `GET /api/portal/templates?status=all|draft|published|archived`
 - `POST /api/portal/templates`
 - `GET /api/portal/template?id={templateId}`
@@ -36,6 +38,8 @@ Integration endpoints:
 ## Tenant Safety
 - No protected endpoint accepts client-provided tenant ids for authorization.
 - SQL reads/writes are bound to session-resolved workspace ids.
+- Soft-deleted workspaces (`coach_tenants.deleted_at IS NOT NULL`) are denied from protected portal endpoints with `403`.
 - Blob uploads use server-generated paths under `tenants/{workspaceId}/...`.
 - Branding asset URLs must map to authenticated workspace prefix.
 - Analytics summary reads only the authenticated workspace tenant_id.
+- Analytics ingest tenant slug resolution excludes soft-deleted workspaces.

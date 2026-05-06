@@ -58,10 +58,12 @@ export async function exchangeCodeForIdentity(code: string) {
 
   const sub = String(verified.payload.sub ?? '');
   const email = String(verified.payload.email ?? '');
+  const familyName = String(verified.payload.family_name ?? '').trim();
+  const fullName = String(verified.payload.name ?? '').trim();
 
   if (!sub || !email) {
     throw new Error('Missing subject/email in Google ID token.');
   }
 
-  return { sub, email };
+  return { sub, email, familyName, fullName };
 }

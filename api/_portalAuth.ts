@@ -14,6 +14,9 @@ export async function requirePortalSession(req: NodeReq) {
   if (!workspace) {
     return { ok: false as const, status: 403, body: { error: 'No workspace linked to this account.' } };
   }
+  if (workspace.deletedAt) {
+    return { ok: false as const, status: 403, body: { error: 'Workspace is not available.' } };
+  }
 
   return {
     ok: true as const,

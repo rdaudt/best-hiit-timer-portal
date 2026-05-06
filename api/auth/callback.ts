@@ -1,5 +1,5 @@
 import { exchangeCodeForIdentity } from '../_oidc.js';
-import { findWorkspaceByGoogleSub } from '../_db.js';
+import { createCoachTenantTablesIfNeeded, createWorkspaceForOwner, findWorkspaceByGoogleSub, workspaceSlugExists } from '../_db.js';
 import { createSessionCookie, readCookie } from '../_session.js';
 
 type NodeReq = { method?: string; query?: Record<string, string | string[]>; headers?: Record<string, string | string[] | undefined> };
@@ -9,6 +9,51 @@ type NodeRes = {
   redirect: (code: number, url: string) => void;
   json: (body: unknown) => void;
 };
+
+const toSlugBase = (email: string) => {
+  const local = email.split('@')[0]?.toLowerCase() ?? 'coach';
+  const sanitized = local
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  const base = sanitized || 'coach';
+  return base.length > 34 ? base.slice(0, 34).replace(/-$/g, '') : base;
+};
+
+async function generateAvailableSlug(email: string) {
+  const base = toSlugBase(email);
+  for (let i = 0; i < 100; i += 1) {
+    const suffix = i === 0 ? '' : `-${i + 1}`;
+    const slug = `${base}${suffix}`.slice(0, 40).replace(/-$/g, '') || 'coach';
+    const exists = await workspaceSlugExists(slug);
+    if (!exists) {
+      return slug;
+    }
+  }
+  throw new Error('Unable to generate available slug.');
+}
+
+function buildInitialCoachName(identity: { familyName?: string; fullName?: string; email: string }) {
+  const family = identity.familyName?.trim();
+  if (family) {
+    return `Coach ${family}`;
+  }
+
+  const full = identity.fullName?.trim() ?? '';
+  const parts = full.split(/\s+/).filter(Boolean);
+  if (parts.length > 1) {
+    return `Coach ${parts[parts.length - 1]}`;
+  }
+
+  const local = identity.email.split('@')[0] ?? '';
+  const localParts = local.split(/[._-]+/).filter(Boolean);
+  if (localParts.length > 1) {
+    const last = localParts[localParts.length - 1];
+    return `Coach ${last.charAt(0).toUpperCase()}${last.slice(1).toLowerCase()}`;
+  }
+
+  return undefined;
+}
 
 export default async function handler(req: NodeReq, res: NodeRes) {
   if (req.method !== 'GET') {
@@ -27,14 +72,27 @@ export default async function handler(req: NodeReq, res: NodeRes) {
 
   try {
     const identity = await exchangeCodeForIdentity(code);
-    const workspace = await findWorkspaceByGoogleSub(identity.sub);
+    await createCoachTenantTablesIfNeeded();
+    let workspace = await findWorkspaceByGoogleSub(identity.sub);
     if (!workspace) {
-      res.status(403).json({
-        error: 'No workspace found for this account.',
-        sub: identity.sub,
-        email: identity.email,
-      });
-      return;
+      try {
+        const slug = await generateAvailableSlug(identity.email);
+        workspace = await createWorkspaceForOwner({
+          ownerGoogleSub: identity.sub,
+          ownerEmail: identity.email,
+          slug,
+          initialCoachName: buildInitialCoachName(identity),
+        });
+      } catch (error) {
+        const latest = await findWorkspaceByGoogleSub(identity.sub);
+        if (!latest) {
+          throw error;
+        }
+        workspace = latest;
+      }
+    }
+    if (!workspace) {
+      throw new Error('Workspace provisioning failed.');
     }
 
     const redirectTo = decodeURIComponent(state.slice(stored.length + 1) || '/');

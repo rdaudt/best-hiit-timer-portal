@@ -14,6 +14,7 @@ export type Branding = {
   status: string;
   updatedAt: string;
   publishedAt: string | null;
+  deletedAt: string | null;
 };
 
 export type Template = {

@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { randomUUID } from 'node:crypto';
 
 let cachedClient: ReturnType<typeof createClient> | null = null;
 
@@ -60,6 +61,9 @@ export async function createCoachTenantTablesIfNeeded() {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         published_at TEXT,
+        deleted_at TEXT,
+        deleted_by_google_sub TEXT,
+        deleted_by_email TEXT,
         updated_by_google_sub TEXT,
         updated_by_email TEXT
       );
@@ -109,6 +113,9 @@ export async function createCoachTenantTablesIfNeeded() {
   await addColumnIfMissing('coach_tenants', "theme_secondary_color TEXT NOT NULL DEFAULT '#111827'", 'theme_secondary_color');
   await addColumnIfMissing('coach_tenants', "brand_headline TEXT NOT NULL DEFAULT ''", 'brand_headline');
   await addColumnIfMissing('coach_tenants', 'published_at TEXT', 'published_at');
+  await addColumnIfMissing('coach_tenants', 'deleted_at TEXT', 'deleted_at');
+  await addColumnIfMissing('coach_tenants', 'deleted_by_google_sub TEXT', 'deleted_by_google_sub');
+  await addColumnIfMissing('coach_tenants', 'deleted_by_email TEXT', 'deleted_by_email');
   await addColumnIfMissing('coach_tenants', 'updated_by_google_sub TEXT', 'updated_by_google_sub');
   await addColumnIfMissing('coach_tenants', 'updated_by_email TEXT', 'updated_by_email');
 
@@ -157,8 +164,26 @@ export async function createAnalyticsTablesIfNeeded() {
 export async function findWorkspaceByGoogleSub(sub: string) {
   const db = getDb();
   const result = await db.execute({
-    sql: `SELECT id, slug FROM coach_tenants WHERE owner_google_sub = ? LIMIT 1`,
+    sql: `SELECT id, slug, deleted_at FROM coach_tenants WHERE owner_google_sub = ? LIMIT 1`,
     args: [sub],
+  });
+  const row = result.rows[0] as Record<string, unknown> | undefined;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    workspaceId: String(row.id),
+    workspaceSlug: String(row.slug),
+    deletedAt: row.deleted_at ? String(row.deleted_at) : null,
+  };
+}
+
+export async function findWorkspaceBySlug(slug: string) {
+  const db = getDb();
+  const result = await db.execute({
+    sql: `SELECT id, slug FROM coach_tenants WHERE slug = ? AND deleted_at IS NULL LIMIT 1`,
+    args: [slug],
   });
   const row = result.rows[0] as Record<string, unknown> | undefined;
   if (!row) {
@@ -171,19 +196,44 @@ export async function findWorkspaceByGoogleSub(sub: string) {
   };
 }
 
-export async function findWorkspaceBySlug(slug: string) {
+export async function workspaceSlugExists(slug: string) {
   const db = getDb();
   const result = await db.execute({
-    sql: `SELECT id, slug FROM coach_tenants WHERE slug = ? LIMIT 1`,
+    sql: `SELECT 1 AS exists_flag FROM coach_tenants WHERE slug = ? LIMIT 1`,
     args: [slug],
   });
-  const row = result.rows[0] as Record<string, unknown> | undefined;
-  if (!row) {
-    return null;
-  }
+  return result.rows.length > 0;
+}
+
+type CreateWorkspaceArgs = {
+  ownerGoogleSub: string;
+  ownerEmail: string;
+  slug: string;
+  initialCoachName?: string;
+};
+
+export async function createWorkspaceForOwner(args: CreateWorkspaceArgs) {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const emailPrefix = args.ownerEmail.split('@')[0]?.trim() ?? '';
+  const coachName = args.initialCoachName?.trim() || emailPrefix || 'Coach';
+  const businessName = `${coachName} Fitness`;
+  const id = randomUUID();
+
+  await db.execute({
+    sql: `
+      INSERT INTO coach_tenants (
+        id, slug, owner_google_sub, owner_email, business_name, coach_name, bio,
+        logo_url, coach_photo_url, coach_header_image_url, qr_code_url, theme_primary_color,
+        theme_secondary_color, brand_headline, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '', '#f97316', '#111827', '', 'draft', ?, ?)
+    `,
+    args: [id, args.slug, args.ownerGoogleSub, args.ownerEmail, businessName, coachName, now, now],
+  });
 
   return {
-    workspaceId: String(row.id),
-    workspaceSlug: String(row.slug),
+    workspaceId: id,
+    workspaceSlug: args.slug,
+    deletedAt: null,
   };
 }
