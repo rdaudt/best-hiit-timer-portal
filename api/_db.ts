@@ -193,13 +193,14 @@ type CreateWorkspaceArgs = {
   ownerGoogleSub: string;
   ownerEmail: string;
   slug: string;
+  initialCoachName?: string;
 };
 
 export async function createWorkspaceForOwner(args: CreateWorkspaceArgs) {
   const db = getDb();
   const now = new Date().toISOString();
   const emailPrefix = args.ownerEmail.split('@')[0]?.trim() ?? '';
-  const coachName = emailPrefix || 'Coach';
+  const coachName = args.initialCoachName?.trim() || emailPrefix || 'Coach';
   const businessName = `${coachName} Fitness`;
   const id = randomUUID();
 

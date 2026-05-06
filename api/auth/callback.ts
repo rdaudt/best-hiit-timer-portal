@@ -33,6 +33,28 @@ async function generateAvailableSlug(email: string) {
   throw new Error('Unable to generate available slug.');
 }
 
+function buildInitialCoachName(identity: { familyName?: string; fullName?: string; email: string }) {
+  const family = identity.familyName?.trim();
+  if (family) {
+    return `Coach ${family}`;
+  }
+
+  const full = identity.fullName?.trim() ?? '';
+  const parts = full.split(/\s+/).filter(Boolean);
+  if (parts.length > 1) {
+    return `Coach ${parts[parts.length - 1]}`;
+  }
+
+  const local = identity.email.split('@')[0] ?? '';
+  const localParts = local.split(/[._-]+/).filter(Boolean);
+  if (localParts.length > 1) {
+    const last = localParts[localParts.length - 1];
+    return `Coach ${last.charAt(0).toUpperCase()}${last.slice(1).toLowerCase()}`;
+  }
+
+  return undefined;
+}
+
 export default async function handler(req: NodeReq, res: NodeRes) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -59,6 +81,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
           ownerGoogleSub: identity.sub,
           ownerEmail: identity.email,
           slug,
+          initialCoachName: buildInitialCoachName(identity),
         });
       } catch (error) {
         const latest = await findWorkspaceByGoogleSub(identity.sub);
