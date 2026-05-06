@@ -11,15 +11,20 @@ async function toBase64(file: File): Promise<string> {
 
 export function BrandingPage() {
   const [branding, setBranding] = useState<Branding | null>(null);
+  const [baseline, setBaseline] = useState<Branding | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [isMutating, setIsMutating] = useState(false);
 
   useEffect(() => {
     let active = true;
     portalApi.getBranding()
       .then((data) => {
-        if (active) setBranding(data);
+        if (active) {
+          setBranding(data);
+          setBaseline(data);
+        }
       })
       .catch((err: Error) => {
         if (active) setError(err.message);
@@ -32,37 +37,49 @@ export function BrandingPage() {
   const save = async () => {
     if (!branding) return;
     try {
+      setIsMutating(true);
       setError('');
       const updated = await portalApi.saveBranding({
         ...branding,
         expectedUpdatedAt: branding.updatedAt,
       });
       setBranding(updated);
+      setBaseline(updated);
       setMessage('Branding saved.');
     } catch (err) {
       setError((err as Error).message);
+    } finally {
+      setIsMutating(false);
     }
   };
 
   const publish = async () => {
     try {
+      setIsMutating(true);
       setError('');
       const updated = await portalApi.publishBranding();
       setBranding(updated);
+      setBaseline(updated);
       setMessage('Branding published.');
     } catch (err) {
       setError((err as Error).message);
+    } finally {
+      setIsMutating(false);
     }
   };
 
   const unpublish = async () => {
     try {
+      setIsMutating(true);
       setError('');
       const updated = await portalApi.unpublishBranding();
       setBranding(updated);
+      setBaseline(updated);
       setMessage('Branding moved back to draft.');
     } catch (err) {
       setError((err as Error).message);
+    } finally {
+      setIsMutating(false);
     }
   };
 
@@ -94,6 +111,10 @@ export function BrandingPage() {
   };
 
   if (!branding) return <section className="panel page-section"><p>Loading branding...</p></section>;
+  const dirty = baseline ? JSON.stringify(branding) !== JSON.stringify(baseline) : false;
+  const saveDisabled = !dirty || isMutating;
+  const publishDisabled = branding.status !== 'draft' || dirty || isMutating;
+  const unpublishDisabled = branding.status !== 'published' || dirty || isMutating;
 
   return (
     <section className="panel page-section">
@@ -116,10 +137,11 @@ export function BrandingPage() {
         <label>QR Code<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('qr-code', f); }} /></label>
       </div>
       <div className="row">
-        <button className="button" onClick={() => void save()}>Save</button>
-        <button className="button" onClick={() => void publish()}>Publish</button>
-        {branding.status === 'published' ? <button className="button" onClick={() => void unpublish()}>Unpublish</button> : null}
+        <button className="button" disabled={saveDisabled} onClick={() => void save()}>Save</button>
+        <button className="button" disabled={publishDisabled} onClick={() => void publish()}>Publish</button>
+        <button className="button" disabled={unpublishDisabled} onClick={() => void unpublish()}>Unpublish</button>
       </div>
+      {dirty ? <p className="muted">Save changes to enable Publish/Unpublish.</p> : null}
       <hr />
       <h3>Delete Profile</h3>
       <p className="muted">This disables your workspace and signs you out. Type <strong>{branding.slug}</strong> to confirm.</p>
