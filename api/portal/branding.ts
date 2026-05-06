@@ -4,6 +4,7 @@ import { errorResponse, nowIso, type NodeReq, type NodeRes } from '../_http.js';
 import { validateTenantAssetRefs } from '../_assets.js';
 
 type BrandingUpdate = {
+  slug: string;
   businessName: string;
   coachName: string;
   bio: string;
@@ -23,6 +24,7 @@ const asString = (value: unknown) => (typeof value === 'string' ? value.trim() :
 function parsePayload(body: unknown): BrandingUpdate {
   const obj = asObject(body);
   return {
+    slug: asString(obj.slug).toLowerCase(),
     businessName: asString(obj.businessName),
     coachName: asString(obj.coachName),
     bio: asString(obj.bio),
@@ -39,6 +41,10 @@ function parsePayload(body: unknown): BrandingUpdate {
 
 function validateHexColor(value: string) {
   return /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+function validateSlug(value: string) {
+  return /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?$/.test(value);
 }
 
 function mapBranding(row: Record<string, unknown>) {
@@ -88,8 +94,12 @@ export default async function handler(req: NodeReq, res: NodeRes) {
 
   if (req.method === 'PUT') {
     const payload = parsePayload(req.body);
-    if (!payload.businessName || !payload.coachName) {
-      res.status(400).json(errorResponse('VALIDATION_ERROR', 'businessName and coachName are required.'));
+    if (!payload.businessName || !payload.coachName || !payload.slug) {
+      res.status(400).json(errorResponse('VALIDATION_ERROR', 'slug, businessName and coachName are required.'));
+      return;
+    }
+    if (!validateSlug(payload.slug)) {
+      res.status(400).json(errorResponse('VALIDATION_ERROR', 'Slug must be 3-40 chars lowercase letters, numbers, and hyphens.'));
       return;
     }
     if (!validateHexColor(payload.themePrimaryColor) || !validateHexColor(payload.themeSecondaryColor)) {
@@ -116,15 +126,17 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     }
 
     const updatedAt = nowIso();
-    await db.execute({
+    try {
+      await db.execute({
       sql: `
         UPDATE coach_tenants
-        SET business_name = ?, coach_name = ?, bio = ?, logo_url = ?, coach_photo_url = ?, coach_header_image_url = ?, qr_code_url = ?,
+        SET slug = ?, business_name = ?, coach_name = ?, bio = ?, logo_url = ?, coach_photo_url = ?, coach_header_image_url = ?, qr_code_url = ?,
             theme_primary_color = ?, theme_secondary_color = ?, brand_headline = ?, updated_at = ?,
             updated_by_google_sub = ?, updated_by_email = ?
         WHERE id = ?
       `,
       args: [
+        payload.slug,
         payload.businessName,
         payload.coachName,
         payload.bio,
@@ -141,6 +153,13 @@ export default async function handler(req: NodeReq, res: NodeRes) {
         auth.session.workspaceId,
       ],
     });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('UNIQUE constraint failed: coach_tenants.slug')) {
+        res.status(409).json(errorResponse('CONFLICT', 'Slug is not available.'));
+        return;
+      }
+      throw error;
+    }
 
     const next = await db.execute({
       sql: `SELECT * FROM coach_tenants WHERE id = ? LIMIT 1`,

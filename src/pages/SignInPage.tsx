@@ -1,11 +1,15 @@
 import { useAuth } from '../services/useAuth';
+import { Navigate } from 'react-router-dom';
 
 export function SignInPage() {
-  const { user } = useAuth();
+  const { isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return <main className="page"><p>Loading session...</p></main>;
+  }
 
   if (user) {
-    window.location.assign('/');
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   return (

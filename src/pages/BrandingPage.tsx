@@ -67,10 +67,11 @@ export function BrandingPage() {
 
   return (
     <section className="panel page-section">
-      <h2>Branding</h2>
+      <h2>Profile &amp; Branding</h2>
       {message && <p className="ok">{message}</p>}
       {error && <p className="error">{error}</p>}
       <div className="grid2">
+        <label>Workspace Slug<input value={branding.slug} onChange={(e) => setBranding({ ...branding, slug: e.target.value.toLowerCase() })} /></label>
         <label>Business Name<input value={branding.businessName} onChange={(e) => setBranding({ ...branding, businessName: e.target.value })} /></label>
         <label>Coach Name<input value={branding.coachName} onChange={(e) => setBranding({ ...branding, coachName: e.target.value })} /></label>
         <label>Primary Color<input type="color" value={branding.themePrimaryColor} onChange={(e) => setBranding({ ...branding, themePrimaryColor: e.target.value })} /></label>

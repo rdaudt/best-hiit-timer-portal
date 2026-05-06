@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client';
+import { randomUUID } from 'node:crypto';
 
 let cachedClient: ReturnType<typeof createClient> | null = null;
 
@@ -185,5 +186,36 @@ export async function findWorkspaceBySlug(slug: string) {
   return {
     workspaceId: String(row.id),
     workspaceSlug: String(row.slug),
+  };
+}
+
+type CreateWorkspaceArgs = {
+  ownerGoogleSub: string;
+  ownerEmail: string;
+  slug: string;
+};
+
+export async function createWorkspaceForOwner(args: CreateWorkspaceArgs) {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const emailPrefix = args.ownerEmail.split('@')[0]?.trim() ?? '';
+  const coachName = emailPrefix || 'Coach';
+  const businessName = `${coachName} Fitness`;
+  const id = randomUUID();
+
+  await db.execute({
+    sql: `
+      INSERT INTO coach_tenants (
+        id, slug, owner_google_sub, owner_email, business_name, coach_name, bio,
+        logo_url, coach_photo_url, coach_header_image_url, qr_code_url, theme_primary_color,
+        theme_secondary_color, brand_headline, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '', '#f97316', '#111827', '', 'draft', ?, ?)
+    `,
+    args: [id, args.slug, args.ownerGoogleSub, args.ownerEmail, businessName, coachName, now, now],
+  });
+
+  return {
+    workspaceId: id,
+    workspaceSlug: args.slug,
   };
 }

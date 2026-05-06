@@ -55,6 +55,7 @@ describe('portal branding api', () => {
     await handler({
       method: 'PUT',
       body: {
+        slug: 'slug',
         businessName: 'ND',
         coachName: 'Coach',
         bio: '',
@@ -82,6 +83,7 @@ describe('portal branding api', () => {
     await handler({
       method: 'PUT',
       body: {
+        slug: 'slug',
         businessName: 'ND',
         coachName: 'Coach',
         bio: '',

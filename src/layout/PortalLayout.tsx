@@ -17,7 +17,7 @@ export function PortalLayout() {
         <p className="muted">{user?.email}</p>
         <nav className="nav-list">
           <NavLink to="/" end className="nav-link">Dashboard</NavLink>
-          <NavLink to="/branding" className="nav-link">Branding</NavLink>
+          <NavLink to="/branding" className="nav-link">Profile &amp; Branding</NavLink>
           <NavLink to="/templates" className="nav-link">Templates</NavLink>
         </nav>
         <button className="button" onClick={onSignOut}>Sign out</button>
