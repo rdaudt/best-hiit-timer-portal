@@ -165,6 +165,7 @@ export function BrandingPage() {
         <label>Secondary Color<input type="color" value={branding.themeSecondaryColor} onChange={(e) => setBranding({ ...branding, themeSecondaryColor: e.target.value })} /></label>
       </div>
       <label>Headline<input value={branding.brandHeadline} onChange={(e) => setBranding({ ...branding, brandHeadline: e.target.value })} /></label>
+      <label>Header Tagline<input value={branding.headerTagline} onChange={(e) => setBranding({ ...branding, headerTagline: e.target.value })} /></label>
       <div className="grid2">
         <label>Instagram Username<input value={branding.igUsername} onChange={(e) => setBranding({ ...branding, igUsername: e.target.value.replace(/^@/, '') })} placeholder="yourusername" /></label>
         <label>TikTok Username<input value={branding.tiktokUsername} onChange={(e) => setBranding({ ...branding, tiktokUsername: e.target.value.replace(/^@/, '') })} placeholder="yourusername" /></label>

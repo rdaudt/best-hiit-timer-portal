@@ -12,6 +12,7 @@ type BrandingUpdate = {
   logoUrl: string;
   coachPhotoUrl: string;
   coachHeaderImageUrl: string;
+  headerTagline: string;
   igUsername: string;
   tiktokUsername: string;
   qrCodeUrl: string;
@@ -34,6 +35,7 @@ function parsePayload(body: unknown): BrandingUpdate {
     logoUrl: asString(obj.logoUrl),
     coachPhotoUrl: asString(obj.coachPhotoUrl),
     coachHeaderImageUrl: asString(obj.coachHeaderImageUrl),
+    headerTagline: asString(obj.headerTagline),
     igUsername: asString(obj.igUsername),
     tiktokUsername: asString(obj.tiktokUsername),
     qrCodeUrl: asString(obj.qrCodeUrl),
@@ -62,6 +64,7 @@ function mapBranding(row: Record<string, unknown>) {
     logoUrl: String(row.logo_url ?? ''),
     coachPhotoUrl: String(row.coach_photo_url ?? ''),
     coachHeaderImageUrl: String(row.coach_header_image_url ?? ''),
+    headerTagline: String(row.header_tagline ?? ''),
     igUsername: String(row.ig_username ?? ''),
     tiktokUsername: String(row.tiktok_username ?? ''),
     qrCodeUrl: String(row.qr_code_url ?? ''),
@@ -203,7 +206,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
       await db.execute({
       sql: `
         UPDATE coach_tenants
-        SET slug = ?, business_name = ?, coach_name = ?, bio = ?, logo_url = ?, coach_photo_url = ?, coach_header_image_url = ?, ig_username = ?, tiktok_username = ?, qr_code_url = ?,
+        SET slug = ?, business_name = ?, coach_name = ?, bio = ?, logo_url = ?, coach_photo_url = ?, coach_header_image_url = ?, header_tagline = ?, ig_username = ?, tiktok_username = ?, qr_code_url = ?,
             theme_primary_color = ?, theme_secondary_color = ?, brand_headline = ?, updated_at = ?,
             updated_by_google_sub = ?, updated_by_email = ?
         WHERE id = ?
@@ -216,6 +219,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
         payload.logoUrl,
         payload.coachPhotoUrl,
         payload.coachHeaderImageUrl,
+        payload.headerTagline,
         payload.igUsername,
         payload.tiktokUsername,
         qrCodeUrl,

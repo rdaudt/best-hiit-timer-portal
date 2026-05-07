@@ -72,7 +72,7 @@ Expected tables include:
 - `content_jobs`
 
 Compatibility note:
-- If `coach_tenants.coach_header_image_url` is not present in the imported schema, the current API bootstrap logic adds it automatically on first authenticated API use.
+- If `coach_tenants.coach_header_image_url` or `coach_tenants.header_tagline` is not present in the imported schema, the current API bootstrap logic adds it automatically on first authenticated API use.
 
 ### Seed workspace row in each DB
 The portal requires matching `owner_google_sub` in `coach_tenants`.
@@ -90,6 +90,7 @@ INSERT INTO coach_tenants (
   logo_url,
   coach_photo_url,
   coach_header_image_url,
+  header_tagline,
   qr_code_url,
   theme_primary_color,
   theme_secondary_color,
@@ -104,6 +105,7 @@ INSERT INTO coach_tenants (
   'coach@email.com',
   'Business Name',
   'Coach Name',
+  '',
   '',
   '',
   '',

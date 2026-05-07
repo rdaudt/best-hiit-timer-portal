@@ -69,7 +69,7 @@ Reference schema: [docs/turso-schema.sql](./docs/turso-schema.sql)
 Key fields:
 
 - Identity: `id`, `slug`, `owner_google_sub`, `owner_email`
-- Branding payload: `business_name`, `coach_name`, `bio`, `logo_url`, `coach_photo_url`, `coach_header_image_url`, `qr_code_url`, theme colors, headline
+- Branding payload: `business_name`, `coach_name`, `bio`, `logo_url`, `coach_photo_url`, `coach_header_image_url`, `header_tagline`, `qr_code_url`, theme colors, headline
 - Lifecycle: `status` (`draft|published`), `published_at`
 - Soft delete: `deleted_at`, `deleted_by_google_sub`, `deleted_by_email`
 - Audit: `updated_at`, `updated_by_google_sub`, `updated_by_email`

@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS coach_tenants (
   logo_url TEXT NOT NULL DEFAULT '',
   coach_photo_url TEXT NOT NULL DEFAULT '',
   coach_header_image_url TEXT NOT NULL DEFAULT '',
+  header_tagline TEXT NOT NULL DEFAULT '',
   ig_username TEXT NOT NULL DEFAULT '',
   tiktok_username TEXT NOT NULL DEFAULT '',
   qr_code_url TEXT NOT NULL DEFAULT '',

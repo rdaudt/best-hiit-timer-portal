@@ -26,6 +26,7 @@ const baseBranding = {
   logoUrl: '',
   coachPhotoUrl: '',
   coachHeaderImageUrl: '',
+  headerTagline: '',
   igUsername: '',
   tiktokUsername: '',
   qrCodeUrl: '',
