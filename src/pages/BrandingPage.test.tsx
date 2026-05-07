@@ -124,4 +124,18 @@ describe('BrandingPage', () => {
     expect(portalApi.regenerateBrandingQrCode).toHaveBeenCalled();
     expect(await screen.findByText('QR code regenerated.')).toBeInTheDocument();
   });
+
+  it('shows uploaded image previews above upload controls', async () => {
+    vi.mocked(portalApi.getBranding).mockResolvedValue({
+      ...baseBranding,
+      logoUrl: 'https://blob.vercel-storage.com/tenants/w1/branding/logo.png',
+      coachPhotoUrl: 'https://blob.vercel-storage.com/tenants/w1/branding/coach.png',
+      coachHeaderImageUrl: 'https://blob.vercel-storage.com/tenants/w1/branding/header.png',
+    } as never);
+    render(<BrandingPage />);
+
+    expect(await screen.findByAltText('Uploaded logo preview')).toBeInTheDocument();
+    expect(screen.getByAltText('Uploaded coach photo preview')).toBeInTheDocument();
+    expect(screen.getByAltText('Uploaded coach header preview')).toBeInTheDocument();
+  });
 });

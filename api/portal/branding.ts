@@ -1,7 +1,7 @@
 import { getDb } from '../_db.js';
 import { requirePortalSession } from '../_portalAuth.js';
 import { errorResponse, nowIso, type NodeReq, type NodeRes } from '../_http.js';
-import { validateTenantAssetRefs } from '../_assets.js';
+import { isTenantOwnedAsset, validateTenantAssetRefs } from '../_assets.js';
 import { provisionWorkspaceQrCode } from '../_qrCode.js';
 
 type BrandingUpdate = {
@@ -82,6 +82,31 @@ export default async function handler(req: NodeReq, res: NodeRes) {
 
   if (req.method === 'GET') {
     const action = typeof req.query?.action === 'string' ? req.query.action : '';
+    if (action === 'asset-image') {
+      const url = typeof req.query?.url === 'string' ? req.query.url.trim() : '';
+      if (!url) {
+        res.status(400).json(errorResponse('VALIDATION_ERROR', 'url is required.'));
+        return;
+      }
+      if (!isTenantOwnedAsset(url, auth.session.workspaceId)) {
+        res.status(403).json(errorResponse('TENANT_ASSET_FORBIDDEN', 'Asset reference must belong to your workspace storage prefix.'));
+        return;
+      }
+      const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+      const upstream = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!upstream.ok) {
+        res.status(502).json(errorResponse('ASSET_FETCH_FAILED', 'Failed to fetch asset image from storage.'));
+        return;
+      }
+      const bytes = Buffer.from(await upstream.arrayBuffer());
+      res.setHeader?.('Content-Type', upstream.headers.get('content-type') ?? 'image/png');
+      res.setHeader?.('Cache-Control', 'private, max-age=60');
+      res.end?.(bytes);
+      return;
+    }
+
     const result = await db.execute({
       sql: `SELECT * FROM coach_tenants WHERE id = ? LIMIT 1`,
       args: [auth.session.workspaceId],
