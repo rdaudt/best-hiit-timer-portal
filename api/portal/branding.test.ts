@@ -9,8 +9,13 @@ vi.mock('../_db.js', () => ({
   getDb: vi.fn(),
 }));
 
+vi.mock('../_qrCode.js', () => ({
+  provisionWorkspaceQrCode: vi.fn(),
+}));
+
 import { requirePortalSession } from '../_portalAuth.js';
 import { getDb } from '../_db.js';
+import { provisionWorkspaceQrCode } from '../_qrCode.js';
 
 function makeRes() {
   const payload: { code?: number; body?: unknown } = {};
@@ -48,7 +53,7 @@ describe('portal branding api', () => {
     } as never);
 
     vi.mocked(getDb).mockReturnValue({
-      execute: vi.fn().mockResolvedValue({ rows: [{ updated_at: '2026-01-01T00:00:00.000Z' }] }),
+      execute: vi.fn().mockResolvedValue({ rows: [{ updated_at: '2026-01-01T00:00:00.000Z', slug: 'slug', qr_code_url: '' }] }),
     } as never);
 
     const res = makeRes();
@@ -100,6 +105,109 @@ describe('portal branding api', () => {
     expect(res.payload.code).toBe(403);
   });
 
+  it('does not regenerate qr when slug is unchanged', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    const execute = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ updated_at: '2026-01-01T00:00:00.000Z', slug: 'slug', qr_code_url: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png' }] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: 'w1', slug: 'slug', qr_code_url: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png', updated_at: '2026-01-01T00:00:01.000Z' }] });
+    vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+    const res = makeRes();
+    await handler({
+      method: 'PUT',
+      body: {
+        slug: 'slug',
+        businessName: 'ND',
+        coachName: 'Coach',
+        bio: '',
+        logoUrl: '',
+        coachPhotoUrl: '',
+        coachHeaderImageUrl: '',
+        qrCodeUrl: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png',
+        themePrimaryColor: '#ffffff',
+        themeSecondaryColor: '#000000',
+        brandHeadline: '',
+        expectedUpdatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    }, res as never);
+
+    expect(res.payload.code).toBe(200);
+    expect(provisionWorkspaceQrCode).not.toHaveBeenCalled();
+  });
+
+  it('regenerates qr when slug changes', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    vi.mocked(provisionWorkspaceQrCode).mockResolvedValue({ url: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png' } as never);
+    const execute = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ updated_at: '2026-01-01T00:00:00.000Z', slug: 'old-slug', qr_code_url: '' }] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: 'w1', slug: 'new-slug', qr_code_url: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png', updated_at: '2026-01-01T00:00:01.000Z' }] });
+    vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+    const res = makeRes();
+    await handler({
+      method: 'PUT',
+      body: {
+        slug: 'new-slug',
+        businessName: 'ND',
+        coachName: 'Coach',
+        bio: '',
+        logoUrl: '',
+        coachPhotoUrl: '',
+        coachHeaderImageUrl: '',
+        qrCodeUrl: '',
+        themePrimaryColor: '#ffffff',
+        themeSecondaryColor: '#000000',
+        brandHeadline: '',
+        expectedUpdatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    }, res as never);
+
+    expect(provisionWorkspaceQrCode).toHaveBeenCalledWith('w1', 'new-slug');
+    const updateCall = execute.mock.calls[1][0];
+    expect(updateCall.args).toContain('https://blob.vercel-storage.com/tenants/w1/branding/qr.png');
+    expect(res.payload.code).toBe(200);
+  });
+
+  it('returns 500 when qr regeneration fails for slug change', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    vi.mocked(provisionWorkspaceQrCode).mockRejectedValue(new Error('qr failed') as never);
+    const execute = vi.fn().mockResolvedValueOnce({ rows: [{ updated_at: '2026-01-01T00:00:00.000Z', slug: 'old-slug', qr_code_url: '' }] });
+    vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+    const res = makeRes();
+    await handler({
+      method: 'PUT',
+      body: {
+        slug: 'new-slug',
+        businessName: 'ND',
+        coachName: 'Coach',
+        bio: '',
+        logoUrl: '',
+        coachPhotoUrl: '',
+        coachHeaderImageUrl: '',
+        qrCodeUrl: '',
+        themePrimaryColor: '#ffffff',
+        themeSecondaryColor: '#000000',
+        brandHeadline: '',
+        expectedUpdatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    }, res as never);
+
+    expect(res.payload.code).toBe(500);
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
   it('unpublishes branding', async () => {
     vi.mocked(requirePortalSession).mockResolvedValue({
       ok: true,
@@ -144,5 +252,24 @@ describe('portal branding api', () => {
     const res = makeRes();
     await handler({ method: 'POST', query: { action: 'bad' } }, res as never);
     expect(res.payload.code).toBe(405);
+  });
+
+  it('regenerates qr code manually', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    vi.mocked(provisionWorkspaceQrCode).mockResolvedValue({ url: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png' } as never);
+    const execute = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ slug: 'slug' }] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: 'w1', slug: 'slug', qr_code_url: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png', updated_at: '2026-01-01T00:00:00.000Z' }] });
+    vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+    const res = makeRes();
+    await handler({ method: 'POST', query: { action: 'regenerate-qr' } }, res as never);
+
+    expect(provisionWorkspaceQrCode).toHaveBeenCalledWith('w1', 'slug');
+    expect(res.payload.code).toBe(200);
   });
 });

@@ -6,6 +6,8 @@ export type NodeReq = {
 };
 
 export type NodeRes = {
+  setHeader?: (name: string, value: string | string[]) => void;
+  end?: (body?: string | Buffer) => void;
   status: (code: number) => { json: (body: unknown) => void };
 };
 

@@ -237,3 +237,11 @@ export async function createWorkspaceForOwner(args: CreateWorkspaceArgs) {
     deletedAt: null,
   };
 }
+
+export async function updateWorkspaceQrCodeUrl(workspaceId: string, qrCodeUrl: string) {
+  const db = getDb();
+  await db.execute({
+    sql: `UPDATE coach_tenants SET qr_code_url = ?, updated_at = ? WHERE id = ?`,
+    args: [qrCodeUrl, new Date().toISOString(), workspaceId],
+  });
+}
