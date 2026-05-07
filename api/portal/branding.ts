@@ -81,6 +81,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
   const db = getDb();
 
   if (req.method === 'GET') {
+    const action = typeof req.query?.action === 'string' ? req.query.action : '';
     const result = await db.execute({
       sql: `SELECT * FROM coach_tenants WHERE id = ? LIMIT 1`,
       args: [auth.session.workspaceId],
@@ -88,6 +89,26 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     const row = result.rows[0] as Record<string, unknown> | undefined;
     if (!row) {
       res.status(404).json(errorResponse('WORKSPACE_NOT_FOUND', 'Workspace not found.'));
+      return;
+    }
+    if (action === 'qr-image') {
+      const qrCodeUrl = asString(row.qr_code_url);
+      if (!qrCodeUrl) {
+        res.status(404).json(errorResponse('QR_CODE_NOT_FOUND', 'QR code not found.'));
+        return;
+      }
+      const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+      const upstream = await fetch(qrCodeUrl, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!upstream.ok) {
+        res.status(502).json(errorResponse('QR_CODE_FETCH_FAILED', 'Failed to fetch QR code image from storage.'));
+        return;
+      }
+      const bytes = Buffer.from(await upstream.arrayBuffer());
+      res.setHeader?.('Content-Type', upstream.headers.get('content-type') ?? 'image/png');
+      res.setHeader?.('Cache-Control', 'private, max-age=60');
+      res.end?.(bytes);
       return;
     }
     res.status(200).json({ data: mapBranding(row) });

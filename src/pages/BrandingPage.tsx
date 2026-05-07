@@ -147,6 +147,20 @@ export function BrandingPage() {
       </div>
       <label>Headline<input value={branding.brandHeadline} onChange={(e) => setBranding({ ...branding, brandHeadline: e.target.value })} /></label>
       <label>Bio<textarea value={branding.bio} onChange={(e) => setBranding({ ...branding, bio: e.target.value })} /></label>
+      <div className="asset-preview-grid">
+        <div className="asset-preview-card">
+          <p>Logo</p>
+          {branding.logoUrl ? <img src={branding.logoUrl} alt="Uploaded logo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+        </div>
+        <div className="asset-preview-card">
+          <p>Coach Photo</p>
+          {branding.coachPhotoUrl ? <img src={branding.coachPhotoUrl} alt="Uploaded coach photo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+        </div>
+        <div className="asset-preview-card">
+          <p>Coach Header Image</p>
+          {branding.coachHeaderImageUrl ? <img src={branding.coachHeaderImageUrl} alt="Uploaded coach header preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+        </div>
+      </div>
       <div className="row">
         <label>Logo<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} /></label>
         <label>Coach Photo<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-photo', f); }} /></label>
@@ -154,7 +168,7 @@ export function BrandingPage() {
       </div>
       <div className="panel">
         <h3>QR Code</h3>
-        {branding.qrCodeUrl ? <img src={`/api/portal/branding-qr?t=${encodeURIComponent(branding.updatedAt)}`} alt="Coach profile QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} /> : <p className="muted">No QR code generated yet.</p>}
+        {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Coach profile QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} /> : <p className="muted">No QR code generated yet.</p>}
         <p className="muted">{coachPublicUrl(branding.slug)}</p>
         <button className="button" disabled={isMutating} onClick={() => void regenerateQrCode()}>Regenerate QR Code</button>
       </div>
