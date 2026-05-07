@@ -29,6 +29,7 @@ export async function provisionWorkspaceQrCode(workspaceId: string, slug: string
       access: 'public',
       contentType: 'image/png',
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -39,6 +40,7 @@ export async function provisionWorkspaceQrCode(workspaceId: string, slug: string
       access: 'private',
       contentType: 'image/png',
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
   }
 

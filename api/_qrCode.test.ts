@@ -39,6 +39,7 @@ describe('qr code provisioning', () => {
       access: 'public',
       contentType: 'image/png',
       addRandomSuffix: false,
+      allowOverwrite: true,
     }));
     expect(result.url).toBe('https://blob.vercel-storage.com/tenants/tenant-1/branding/qr.png');
   });
@@ -52,8 +53,8 @@ describe('qr code provisioning', () => {
 
     const result = await provisionWorkspaceQrCode('tenant-1', 'rdaudt');
 
-    expect(vi.mocked(put).mock.calls[0][2]).toMatchObject({ access: 'public' });
-    expect(vi.mocked(put).mock.calls[1][2]).toMatchObject({ access: 'private' });
+    expect(vi.mocked(put).mock.calls[0][2]).toMatchObject({ access: 'public', allowOverwrite: true });
+    expect(vi.mocked(put).mock.calls[1][2]).toMatchObject({ access: 'private', allowOverwrite: true });
     expect(result.url).toContain('.private.blob.vercel-storage.com/');
   });
 });
