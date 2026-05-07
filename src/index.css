@@ -41,10 +41,52 @@ textarea { min-height: 84px; }
 .actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 .actions button { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 0.4rem; padding: 0.3rem 0.5rem; }
 
+.asset-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.asset-preview-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.6rem;
+  background: #f8fafc;
+  padding: 0.6rem;
+}
+
+.asset-preview-card p {
+  margin: 0 0 0.45rem;
+  font-weight: 600;
+}
+
+.asset-preview-image,
+.asset-preview-placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 0.5rem;
+}
+
+.asset-preview-image {
+  object-fit: contain;
+  display: block;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+}
+
+.asset-preview-placeholder {
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  background: #fff;
+}
+
 .page { min-height: 100vh; display: grid; place-content: center; gap: 1rem; padding: 1rem; }
 
 @media (max-width: 900px) {
   .app-shell { grid-template-columns: 1fr; }
   .cards { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
   .grid2 { grid-template-columns: 1fr; }
+  .asset-preview-grid { grid-template-columns: 1fr; }
 }
