@@ -10,6 +10,7 @@ async function toBase64(file: File): Promise<string> {
 }
 
 export function BrandingPage() {
+  const coachPublicUrl = (slug: string) => `https://best-hiit-timer.vercel.app/${slug}`;
   const [branding, setBranding] = useState<Branding | null>(null);
   const [baseline, setBaseline] = useState<Branding | null>(null);
   const [message, setMessage] = useState('');
@@ -100,6 +101,22 @@ export function BrandingPage() {
     }
   };
 
+  const regenerateQrCode = async () => {
+    try {
+      setIsMutating(true);
+      setError('');
+      setMessage('');
+      const updated = await portalApi.regenerateBrandingQrCode();
+      setBranding(updated);
+      setBaseline(updated);
+      setMessage('QR code regenerated.');
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
   const upload = async (assetType: string, file: File) => {
     const dataBase64 = await toBase64(file);
     const uploaded = await portalApi.uploadAsset({ assetType, filename: file.name, contentType: file.type, dataBase64 });
@@ -134,7 +151,12 @@ export function BrandingPage() {
         <label>Logo<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} /></label>
         <label>Coach Photo<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-photo', f); }} /></label>
         <label>Coach Header Image<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-header-image', f); }} /></label>
-        <label>QR Code<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('qr-code', f); }} /></label>
+      </div>
+      <div className="panel">
+        <h3>QR Code</h3>
+        {branding.qrCodeUrl ? <img src={`/api/portal/branding-qr?t=${encodeURIComponent(branding.updatedAt)}`} alt="Coach profile QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} /> : <p className="muted">No QR code generated yet.</p>}
+        <p className="muted">{coachPublicUrl(branding.slug)}</p>
+        <button className="button" disabled={isMutating} onClick={() => void regenerateQrCode()}>Regenerate QR Code</button>
       </div>
       <div className="row">
         <button className="button" disabled={saveDisabled} onClick={() => void save()}>Save</button>

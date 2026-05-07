@@ -48,4 +48,18 @@ describe('portal assets upload api', () => {
 
     expect(res.payload.code).toBe(201);
   });
+
+  it('falls back to private access for private stores', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({ ok: true, session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 's', email: 'e' } } as never);
+    vi.mocked(put)
+      .mockRejectedValueOnce(new Error('Vercel Blob: Cannot use public access on a private store. The store is configured with private access.') as never)
+      .mockResolvedValueOnce({ url: 'https://store.private.blob.vercel-storage.com/tenants/w1/branding/abc-logo.png' } as never);
+
+    const res = makeRes();
+    await handler({ method: 'POST', body: { assetType: 'branding', filename: 'logo.png', contentType: 'image/png', dataBase64: Buffer.from('abc').toString('base64') } }, res as never);
+
+    expect(res.payload.code).toBe(201);
+    expect(vi.mocked(put).mock.calls[0][2]).toMatchObject({ access: 'public' });
+    expect(vi.mocked(put).mock.calls[1][2]).toMatchObject({ access: 'private' });
+  });
 });

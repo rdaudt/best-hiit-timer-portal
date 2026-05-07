@@ -34,6 +34,7 @@ export const portalApi = {
   saveBranding: (payload: Record<string, unknown>) => api<Branding>('/api/portal/branding', { method: 'PUT', body: JSON.stringify(payload) }),
   publishBranding: () => api<Branding>('/api/portal/branding?action=publish', { method: 'POST' }),
   unpublishBranding: () => api<Branding>('/api/portal/branding?action=unpublish', { method: 'POST' }),
+  regenerateBrandingQrCode: () => api<Branding>('/api/portal/branding?action=regenerate-qr', { method: 'POST' }),
   deleteBranding: () => api<Branding>('/api/portal/branding?action=delete', { method: 'POST' }),
   logout: () => api<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
 

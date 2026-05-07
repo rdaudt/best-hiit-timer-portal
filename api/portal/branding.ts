@@ -2,6 +2,7 @@ import { getDb } from '../_db.js';
 import { requirePortalSession } from '../_portalAuth.js';
 import { errorResponse, nowIso, type NodeReq, type NodeRes } from '../_http.js';
 import { validateTenantAssetRefs } from '../_assets.js';
+import { provisionWorkspaceQrCode } from '../_qrCode.js';
 
 type BrandingUpdate = {
   slug: string;
@@ -113,7 +114,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     }
 
     const current = await db.execute({
-      sql: `SELECT updated_at FROM coach_tenants WHERE id = ? LIMIT 1`,
+      sql: `SELECT updated_at, slug, qr_code_url FROM coach_tenants WHERE id = ? LIMIT 1`,
       args: [auth.session.workspaceId],
     });
     const row = current.rows[0] as Record<string, unknown> | undefined;
@@ -124,6 +125,25 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     if (String(row.updated_at ?? '') !== payload.expectedUpdatedAt) {
       res.status(409).json(errorResponse('CONFLICT', 'Workspace was updated by another session.'));
       return;
+    }
+
+    let qrCodeUrl = payload.qrCodeUrl;
+    const previousSlug = String(row.slug ?? '').toLowerCase();
+    const nextSlug = payload.slug.toLowerCase();
+    if (previousSlug !== nextSlug) {
+      try {
+        const qr = await provisionWorkspaceQrCode(auth.session.workspaceId, nextSlug);
+        qrCodeUrl = qr.url;
+      } catch (error) {
+        console.error('workspace qr regeneration failed', {
+          workspaceId: auth.session.workspaceId,
+          previousSlug,
+          nextSlug,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        res.status(500).json(errorResponse('QR_CODE_GENERATION_FAILED', 'Failed to generate QR code for updated slug.'));
+        return;
+      }
     }
 
     const updatedAt = nowIso();
@@ -144,7 +164,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
         payload.logoUrl,
         payload.coachPhotoUrl,
         payload.coachHeaderImageUrl,
-        payload.qrCodeUrl,
+        qrCodeUrl,
         payload.themePrimaryColor,
         payload.themeSecondaryColor,
         payload.brandHeadline,
@@ -172,9 +192,43 @@ export default async function handler(req: NodeReq, res: NodeRes) {
 
   if (req.method === 'POST') {
     const action = typeof req.query?.action === 'string' ? req.query.action : '';
-    if (action !== 'publish' && action !== 'unpublish' && action !== 'delete') {
+    if (action !== 'publish' && action !== 'unpublish' && action !== 'delete' && action !== 'regenerate-qr') {
       res.status(405).json(errorResponse('METHOD_NOT_ALLOWED', 'Method not allowed.'));
       return;
+    }
+
+    if (action === 'regenerate-qr') {
+      const current = await db.execute({
+        sql: `SELECT slug FROM coach_tenants WHERE id = ? LIMIT 1`,
+        args: [auth.session.workspaceId],
+      });
+      const row = current.rows[0] as Record<string, unknown> | undefined;
+      if (!row) {
+        res.status(404).json(errorResponse('WORKSPACE_NOT_FOUND', 'Workspace not found.'));
+        return;
+      }
+
+      const slug = String(row.slug ?? '').toLowerCase();
+      try {
+        const qr = await provisionWorkspaceQrCode(auth.session.workspaceId, slug);
+        const actionAt = nowIso();
+        await db.execute({
+          sql: `
+            UPDATE coach_tenants
+            SET qr_code_url = ?, updated_at = ?, updated_by_google_sub = ?, updated_by_email = ?
+            WHERE id = ?
+          `,
+          args: [qr.url, actionAt, auth.session.sub, auth.session.email, auth.session.workspaceId],
+        });
+      } catch (error) {
+        console.error('workspace qr regeneration failed', {
+          workspaceId: auth.session.workspaceId,
+          slug,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        res.status(500).json(errorResponse('QR_CODE_GENERATION_FAILED', 'Failed to generate QR code.'));
+        return;
+      }
     }
 
     const actionAt = nowIso();

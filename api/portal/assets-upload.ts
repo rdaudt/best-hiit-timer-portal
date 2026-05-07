@@ -38,7 +38,16 @@ export default async function handler(req: NodeReq, res: NodeRes) {
   }
 
   const pathname = buildTenantAssetPath(auth.session.workspaceId, assetType, filename);
-  const blob = await put(pathname, bytes, { access: 'public', contentType });
+  let blob;
+  try {
+    blob = await put(pathname, bytes, { access: 'public', contentType });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes('Cannot use public access on a private store')) {
+      throw error;
+    }
+    blob = await put(pathname, bytes, { access: 'private', contentType });
+  }
 
   res.status(201).json({
     data: {

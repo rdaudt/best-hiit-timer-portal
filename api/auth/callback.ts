@@ -1,5 +1,6 @@
 import { exchangeCodeForIdentity } from '../_oidc.js';
-import { createCoachTenantTablesIfNeeded, createWorkspaceForOwner, findWorkspaceByGoogleSub, workspaceSlugExists } from '../_db.js';
+import { createCoachTenantTablesIfNeeded, createWorkspaceForOwner, findWorkspaceByGoogleSub, updateWorkspaceQrCodeUrl, workspaceSlugExists } from '../_db.js';
+import { provisionWorkspaceQrCode } from '../_qrCode.js';
 import { createSessionCookie, readCookie } from '../_session.js';
 
 type NodeReq = { method?: string; query?: Record<string, string | string[]>; headers?: Record<string, string | string[] | undefined> };
@@ -83,6 +84,16 @@ export default async function handler(req: NodeReq, res: NodeRes) {
           slug,
           initialCoachName: buildInitialCoachName(identity),
         });
+        try {
+          const qr = await provisionWorkspaceQrCode(workspace.workspaceId, workspace.workspaceSlug);
+          await updateWorkspaceQrCodeUrl(workspace.workspaceId, qr.url);
+        } catch (qrError) {
+          console.error('workspace qr provisioning failed', {
+            workspaceId: workspace.workspaceId,
+            slug: workspace.workspaceSlug,
+            error: qrError instanceof Error ? qrError.message : String(qrError),
+          });
+        }
       } catch (error) {
         const latest = await findWorkspaceByGoogleSub(identity.sub);
         if (!latest) {
