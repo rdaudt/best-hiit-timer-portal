@@ -53,6 +53,8 @@ export async function createCoachTenantTablesIfNeeded() {
         logo_url TEXT NOT NULL DEFAULT '',
         coach_photo_url TEXT NOT NULL DEFAULT '',
         coach_header_image_url TEXT NOT NULL DEFAULT '',
+        ig_username TEXT NOT NULL DEFAULT '',
+        tiktok_username TEXT NOT NULL DEFAULT '',
         qr_code_url TEXT NOT NULL DEFAULT '',
         theme_primary_color TEXT NOT NULL DEFAULT '#f97316',
         theme_secondary_color TEXT NOT NULL DEFAULT '#111827',
@@ -108,6 +110,8 @@ export async function createCoachTenantTablesIfNeeded() {
   await addColumnIfMissing('coach_tenants', "logo_url TEXT NOT NULL DEFAULT ''", 'logo_url');
   await addColumnIfMissing('coach_tenants', "coach_photo_url TEXT NOT NULL DEFAULT ''", 'coach_photo_url');
   await addColumnIfMissing('coach_tenants', "coach_header_image_url TEXT NOT NULL DEFAULT ''", 'coach_header_image_url');
+  await addColumnIfMissing('coach_tenants', "ig_username TEXT NOT NULL DEFAULT ''", 'ig_username');
+  await addColumnIfMissing('coach_tenants', "tiktok_username TEXT NOT NULL DEFAULT ''", 'tiktok_username');
   await addColumnIfMissing('coach_tenants', "qr_code_url TEXT NOT NULL DEFAULT ''", 'qr_code_url');
   await addColumnIfMissing('coach_tenants', "theme_primary_color TEXT NOT NULL DEFAULT '#f97316'", 'theme_primary_color');
   await addColumnIfMissing('coach_tenants', "theme_secondary_color TEXT NOT NULL DEFAULT '#111827'", 'theme_secondary_color');
@@ -224,9 +228,9 @@ export async function createWorkspaceForOwner(args: CreateWorkspaceArgs) {
     sql: `
       INSERT INTO coach_tenants (
         id, slug, owner_google_sub, owner_email, business_name, coach_name, bio,
-        logo_url, coach_photo_url, coach_header_image_url, qr_code_url, theme_primary_color,
+        logo_url, coach_photo_url, coach_header_image_url, ig_username, tiktok_username, qr_code_url, theme_primary_color,
         theme_secondary_color, brand_headline, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '', '#f97316', '#111827', '', 'draft', ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '', '', '#f97316', '#111827', '', 'draft', ?, ?)
     `,
     args: [id, args.slug, args.ownerGoogleSub, args.ownerEmail, businessName, coachName, now, now],
   });

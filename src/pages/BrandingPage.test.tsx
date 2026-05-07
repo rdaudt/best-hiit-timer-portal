@@ -26,6 +26,8 @@ const baseBranding = {
   logoUrl: '',
   coachPhotoUrl: '',
   coachHeaderImageUrl: '',
+  igUsername: '',
+  tiktokUsername: '',
   qrCodeUrl: '',
   themePrimaryColor: '#ffffff',
   themeSecondaryColor: '#000000',

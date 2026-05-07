@@ -272,4 +272,42 @@ describe('portal branding api', () => {
     expect(provisionWorkspaceQrCode).toHaveBeenCalledWith('w1', 'slug');
     expect(res.payload.code).toBe(200);
   });
+
+  it('persists instagram and tiktok usernames on save', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue({
+      ok: true,
+      session: { workspaceId: 'w1', workspaceSlug: 'slug', sub: 'sub1', email: 'coach@example.com' },
+    } as never);
+    const execute = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ updated_at: '2026-01-01T00:00:00.000Z', slug: 'slug', qr_code_url: '' }] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: 'w1', slug: 'slug', ig_username: 'coachig', tiktok_username: 'coachtok', updated_at: '2026-01-01T00:00:01.000Z' }] });
+    vi.mocked(getDb).mockReturnValue({ execute } as never);
+
+    const res = makeRes();
+    await handler({
+      method: 'PUT',
+      body: {
+        slug: 'slug',
+        businessName: 'ND',
+        coachName: 'Coach',
+        bio: '',
+        logoUrl: '',
+        coachPhotoUrl: '',
+        coachHeaderImageUrl: '',
+        igUsername: 'coachig',
+        tiktokUsername: 'coachtok',
+        qrCodeUrl: '',
+        themePrimaryColor: '#ffffff',
+        themeSecondaryColor: '#000000',
+        brandHeadline: '',
+        expectedUpdatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    }, res as never);
+
+    expect(res.payload.code).toBe(200);
+    const updateCall = execute.mock.calls[1][0];
+    expect(updateCall.args).toContain('coachig');
+    expect(updateCall.args).toContain('coachtok');
+  });
 });

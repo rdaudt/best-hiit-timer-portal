@@ -7,6 +7,8 @@ export type Branding = {
   logoUrl: string;
   coachPhotoUrl: string;
   coachHeaderImageUrl: string;
+  igUsername: string;
+  tiktokUsername: string;
   qrCodeUrl: string;
   themePrimaryColor: string;
   themeSecondaryColor: string;
