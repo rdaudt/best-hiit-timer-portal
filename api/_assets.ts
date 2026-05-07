@@ -5,7 +5,7 @@ const normalizePath = (value: string) => value.replace(/^\/+/, '');
 export function buildTenantAssetPath(workspaceId: string, assetType: string, filename: string) {
   const safeType = assetType.replace(/[^a-z0-9_-]/gi, '').toLowerCase() || 'generic';
   const safeName = filename.replace(/[^a-z0-9._-]/gi, '_').toLowerCase() || 'asset.bin';
-  return `${ASSET_BASE_PREFIX}/${workspaceId}/${safeType}/${Date.now()}-${safeName}`;
+  return `${ASSET_BASE_PREFIX}/${workspaceId}/${safeType}/${safeName}`;
 }
 
 export function getTenantPrefix(workspaceId: string) {
