@@ -11,6 +11,7 @@ async function toBase64(file: File): Promise<string> {
 
 export function BrandingPage() {
   const coachPublicUrl = (slug: string) => `https://best-hiit-timer.vercel.app/${slug}`;
+  const assetPreviewUrl = (url: string) => `/api/portal/branding?action=asset-image&url=${encodeURIComponent(url)}`;
   const [branding, setBranding] = useState<Branding | null>(null);
   const [baseline, setBaseline] = useState<Branding | null>(null);
   const [message, setMessage] = useState('');
@@ -118,13 +119,31 @@ export function BrandingPage() {
   };
 
   const upload = async (assetType: string, file: File) => {
-    const dataBase64 = await toBase64(file);
-    const uploaded = await portalApi.uploadAsset({ assetType, filename: file.name, contentType: file.type, dataBase64 });
     if (!branding) return;
-    if (assetType === 'logo') setBranding({ ...branding, logoUrl: uploaded.url });
-    if (assetType === 'coach-photo') setBranding({ ...branding, coachPhotoUrl: uploaded.url });
-    if (assetType === 'coach-header-image') setBranding({ ...branding, coachHeaderImageUrl: uploaded.url });
-    if (assetType === 'qr-code') setBranding({ ...branding, qrCodeUrl: uploaded.url });
+    try {
+      setIsMutating(true);
+      setError('');
+      setMessage('');
+      const dataBase64 = await toBase64(file);
+      const uploaded = await portalApi.uploadAsset({ assetType, filename: file.name, contentType: file.type, dataBase64 });
+      const nextBranding = { ...branding };
+      if (assetType === 'logo') nextBranding.logoUrl = uploaded.url;
+      if (assetType === 'coach-photo') nextBranding.coachPhotoUrl = uploaded.url;
+      if (assetType === 'coach-header-image') nextBranding.coachHeaderImageUrl = uploaded.url;
+      if (assetType === 'qr-code') nextBranding.qrCodeUrl = uploaded.url;
+
+      const persisted = await portalApi.saveBranding({
+        ...nextBranding,
+        expectedUpdatedAt: branding.updatedAt,
+      });
+      setBranding(persisted);
+      setBaseline(persisted);
+      setMessage('Image uploaded and saved.');
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   if (!branding) return <section className="panel page-section"><p>Loading branding...</p></section>;
@@ -150,21 +169,21 @@ export function BrandingPage() {
       <div className="asset-preview-grid">
         <div className="asset-preview-card">
           <p>Logo</p>
-          {branding.logoUrl ? <img src={branding.logoUrl} alt="Uploaded logo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+          {branding.logoUrl ? <img src={assetPreviewUrl(branding.logoUrl)} alt="Uploaded logo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
         </div>
         <div className="asset-preview-card">
           <p>Coach Photo</p>
-          {branding.coachPhotoUrl ? <img src={branding.coachPhotoUrl} alt="Uploaded coach photo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+          {branding.coachPhotoUrl ? <img src={assetPreviewUrl(branding.coachPhotoUrl)} alt="Uploaded coach photo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
         </div>
         <div className="asset-preview-card">
           <p>Coach Header Image</p>
-          {branding.coachHeaderImageUrl ? <img src={branding.coachHeaderImageUrl} alt="Uploaded coach header preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+          {branding.coachHeaderImageUrl ? <img src={assetPreviewUrl(branding.coachHeaderImageUrl)} alt="Uploaded coach header preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
         </div>
       </div>
       <div className="row">
-        <label>Logo<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} /></label>
-        <label>Coach Photo<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-photo', f); }} /></label>
-        <label>Coach Header Image<input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-header-image', f); }} /></label>
+        <label>Logo<input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} /></label>
+        <label>Coach Photo<input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-photo', f); }} /></label>
+        <label>Coach Header Image<input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-header-image', f); }} /></label>
       </div>
       <div className="panel">
         <h3>QR Code</h3>
