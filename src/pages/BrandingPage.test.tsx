@@ -116,6 +116,26 @@ describe('BrandingPage', () => {
     expect(await screen.findByText('Register as a coach')).toBeInTheDocument();
     expect(screen.getByAltText('Register as a coach QR code')).toBeInTheDocument();
     expect(screen.getByText('https://best-hiit-timer-portal.vercel.app/')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Timer App' })).toBeInTheDocument();
+  });
+
+  it('enables open timer app button for published profiles', async () => {
+    render(<BrandingPage />);
+    expect(await screen.findByRole('button', { name: 'Open Timer App' })).toBeEnabled();
+  });
+
+  it('disables open timer app button for draft profiles', async () => {
+    vi.mocked(portalApi.getBranding).mockResolvedValue({ ...baseBranding, status: 'draft', publishedAt: null } as never);
+    render(<BrandingPage />);
+    expect(await screen.findByRole('button', { name: 'Open Timer App' })).toBeDisabled();
+  });
+
+  it('opens timer app in a new tab using the current slug', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    render(<BrandingPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Timer App' }));
+    expect(openSpy).toHaveBeenCalledWith('https://best-hiit-timer.vercel.app/slug-one', '_blank', 'noopener,noreferrer');
+    openSpy.mockRestore();
   });
 
   it('shows uploaded image previews above upload controls', async () => {

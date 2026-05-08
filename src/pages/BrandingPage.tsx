@@ -10,6 +10,7 @@ async function toBase64(file: File): Promise<string> {
 }
 
 export function BrandingPage() {
+  const timerBaseUrl = 'https://best-hiit-timer.vercel.app/';
   const coachRegistrationQrPath = '/assets/portal-qr-code.png';
   const assetPreviewUrl = (url: string) => `/api/portal/branding?action=asset-image&url=${encodeURIComponent(url)}`;
   const [branding, setBranding] = useState<Branding | null>(null);
@@ -135,6 +136,8 @@ export function BrandingPage() {
   const saveDisabled = !dirty || isMutating;
   const publishDisabled = branding.status !== 'draft' || dirty || isMutating;
   const unpublishDisabled = branding.status !== 'published' || dirty || isMutating;
+  const openTimerDisabled = branding.status !== 'published' || isMutating;
+  const timerUrl = `${timerBaseUrl}${branding.slug}`;
 
   return (
     <section className="panel page-section">
@@ -179,6 +182,14 @@ export function BrandingPage() {
         <p><strong>Register as a coach</strong></p>
         <img src={coachRegistrationQrPath} alt="Register as a coach QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} />
         <p className="muted">https://best-hiit-timer-portal.vercel.app/</p>
+        <button
+          className="button"
+          type="button"
+          disabled={openTimerDisabled}
+          onClick={() => window.open(timerUrl, '_blank', 'noopener,noreferrer')}
+        >
+          Open Timer App
+        </button>
       </div>
       <div className="row">
         <button className="button" disabled={saveDisabled} onClick={() => void save()}>Save</button>
