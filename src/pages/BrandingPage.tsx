@@ -136,7 +136,7 @@ export function BrandingPage() {
   const saveDisabled = !dirty || isMutating;
   const publishDisabled = branding.status !== 'draft' || dirty || isMutating;
   const unpublishDisabled = branding.status !== 'published' || dirty || isMutating;
-  const openTimerDisabled = branding.status !== 'published' || isMutating;
+  const openTimerDisabled = branding.status !== 'published' || dirty || isMutating;
   const timerUrl = `${timerBaseUrl}${branding.slug}`;
 
   return (
