@@ -10,7 +10,8 @@ async function toBase64(file: File): Promise<string> {
 }
 
 export function BrandingPage() {
-  const coachPublicUrl = (slug: string) => `https://best-hiit-timer.vercel.app/${slug}`;
+  const timerBaseUrl = 'https://best-hiit-timer.vercel.app/';
+  const coachRegistrationQrPath = '/assets/portal-qr-code.png';
   const assetPreviewUrl = (url: string) => `/api/portal/branding?action=asset-image&url=${encodeURIComponent(url)}`;
   const [branding, setBranding] = useState<Branding | null>(null);
   const [baseline, setBaseline] = useState<Branding | null>(null);
@@ -102,22 +103,6 @@ export function BrandingPage() {
     }
   };
 
-  const regenerateQrCode = async () => {
-    try {
-      setIsMutating(true);
-      setError('');
-      setMessage('');
-      const updated = await portalApi.regenerateBrandingQrCode();
-      setBranding(updated);
-      setBaseline(updated);
-      setMessage('QR code regenerated.');
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setIsMutating(false);
-    }
-  };
-
   const upload = async (assetType: string, file: File) => {
     if (!branding) return;
     try {
@@ -151,6 +136,8 @@ export function BrandingPage() {
   const saveDisabled = !dirty || isMutating;
   const publishDisabled = branding.status !== 'draft' || dirty || isMutating;
   const unpublishDisabled = branding.status !== 'published' || dirty || isMutating;
+  const openTimerDisabled = branding.status !== 'published' || dirty || isMutating;
+  const timerUrl = `${timerBaseUrl}${branding.slug}`;
 
   return (
     <section className="panel page-section">
@@ -192,9 +179,26 @@ export function BrandingPage() {
       </div>
       <div className="panel">
         <h3>QR Code</h3>
-        {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Coach profile QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} /> : <p className="muted">No QR code generated yet.</p>}
-        <p className="muted">{coachPublicUrl(branding.slug)}</p>
-        <button className="button" disabled={isMutating} onClick={() => void regenerateQrCode()}>Regenerate QR Code</button>
+        <div className="grid2">
+          <div>
+            <p><strong>Register as a coach</strong></p>
+            <img src={coachRegistrationQrPath} alt="Register as a coach QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} />
+            <p className="muted">https://best-hiit-timer-portal.vercel.app/</p>
+          </div>
+          <div>
+            <p><strong>Register as an athlete</strong></p>
+            {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Register as an athlete QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} /> : <p className="muted">No QR code generated yet.</p>}
+            <p className="muted">{timerUrl}</p>
+            <button
+              className="button"
+              type="button"
+              disabled={openTimerDisabled}
+              onClick={() => window.open(timerUrl, '_blank', 'noopener,noreferrer')}
+            >
+              Register as an athlete
+            </button>
+          </div>
+        </div>
       </div>
       <div className="row">
         <button className="button" disabled={saveDisabled} onClick={() => void save()}>Save</button>

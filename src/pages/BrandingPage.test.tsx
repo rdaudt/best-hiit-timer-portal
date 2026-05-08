@@ -111,21 +111,32 @@ describe('BrandingPage', () => {
     expect(await screen.findByText('Type your workspace slug to confirm deletion.')).toBeInTheDocument();
   });
 
-  it('shows qr target url based on current slug', async () => {
+  it('shows static coach registration qr section', async () => {
     render(<BrandingPage />);
-    expect(await screen.findByText('https://best-hiit-timer.vercel.app/slug-one')).toBeInTheDocument();
+    expect(await screen.findByText('Register as a coach')).toBeInTheDocument();
+    expect(screen.getByAltText('Register as a coach QR code')).toBeInTheDocument();
+    expect(screen.getByText('https://best-hiit-timer-portal.vercel.app/')).toBeInTheDocument();
+    expect(screen.getAllByText('Register as an athlete')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Register as an athlete' })).toBeInTheDocument();
   });
 
-  it('regenerates qr code from branding page', async () => {
-    vi.mocked(portalApi.regenerateBrandingQrCode).mockResolvedValue({
-      ...baseBranding,
-      qrCodeUrl: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png',
-      updatedAt: '2026-02-01T00:00:00.000Z',
-    } as never);
+  it('enables open timer app button for published profiles', async () => {
     render(<BrandingPage />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Regenerate QR Code' }));
-    expect(portalApi.regenerateBrandingQrCode).toHaveBeenCalled();
-    expect(await screen.findByText('QR code regenerated.')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Register as an athlete' })).toBeEnabled();
+  });
+
+  it('disables open timer app button for draft profiles', async () => {
+    vi.mocked(portalApi.getBranding).mockResolvedValue({ ...baseBranding, status: 'draft', publishedAt: null } as never);
+    render(<BrandingPage />);
+    expect(await screen.findByRole('button', { name: 'Register as an athlete' })).toBeDisabled();
+  });
+
+  it('opens timer app in a new tab using the current slug', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    render(<BrandingPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Register as an athlete' }));
+    expect(openSpy).toHaveBeenCalledWith('https://best-hiit-timer.vercel.app/slug-one', '_blank', 'noopener,noreferrer');
+    openSpy.mockRestore();
   });
 
   it('shows uploaded image previews above upload controls', async () => {
