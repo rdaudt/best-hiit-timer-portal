@@ -111,21 +111,11 @@ describe('BrandingPage', () => {
     expect(await screen.findByText('Type your workspace slug to confirm deletion.')).toBeInTheDocument();
   });
 
-  it('shows qr target url based on current slug', async () => {
+  it('shows static coach registration qr section', async () => {
     render(<BrandingPage />);
-    expect(await screen.findByText('https://best-hiit-timer.vercel.app/slug-one')).toBeInTheDocument();
-  });
-
-  it('regenerates qr code from branding page', async () => {
-    vi.mocked(portalApi.regenerateBrandingQrCode).mockResolvedValue({
-      ...baseBranding,
-      qrCodeUrl: 'https://blob.vercel-storage.com/tenants/w1/branding/qr.png',
-      updatedAt: '2026-02-01T00:00:00.000Z',
-    } as never);
-    render(<BrandingPage />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Regenerate QR Code' }));
-    expect(portalApi.regenerateBrandingQrCode).toHaveBeenCalled();
-    expect(await screen.findByText('QR code regenerated.')).toBeInTheDocument();
+    expect(await screen.findByText('Register as a coach')).toBeInTheDocument();
+    expect(screen.getByAltText('Register as a coach QR code')).toBeInTheDocument();
+    expect(screen.getByText('https://best-hiit-timer-portal.vercel.app/')).toBeInTheDocument();
   });
 
   it('shows uploaded image previews above upload controls', async () => {

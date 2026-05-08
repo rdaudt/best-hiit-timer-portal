@@ -10,7 +10,7 @@ async function toBase64(file: File): Promise<string> {
 }
 
 export function BrandingPage() {
-  const coachPublicUrl = (slug: string) => `https://best-hiit-timer.vercel.app/${slug}`;
+  const coachRegistrationQrPath = '/assets/portal-qr-code.png';
   const assetPreviewUrl = (url: string) => `/api/portal/branding?action=asset-image&url=${encodeURIComponent(url)}`;
   const [branding, setBranding] = useState<Branding | null>(null);
   const [baseline, setBaseline] = useState<Branding | null>(null);
@@ -102,22 +102,6 @@ export function BrandingPage() {
     }
   };
 
-  const regenerateQrCode = async () => {
-    try {
-      setIsMutating(true);
-      setError('');
-      setMessage('');
-      const updated = await portalApi.regenerateBrandingQrCode();
-      setBranding(updated);
-      setBaseline(updated);
-      setMessage('QR code regenerated.');
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setIsMutating(false);
-    }
-  };
-
   const upload = async (assetType: string, file: File) => {
     if (!branding) return;
     try {
@@ -192,9 +176,9 @@ export function BrandingPage() {
       </div>
       <div className="panel">
         <h3>QR Code</h3>
-        {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Coach profile QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} /> : <p className="muted">No QR code generated yet.</p>}
-        <p className="muted">{coachPublicUrl(branding.slug)}</p>
-        <button className="button" disabled={isMutating} onClick={() => void regenerateQrCode()}>Regenerate QR Code</button>
+        <p><strong>Register as a coach</strong></p>
+        <img src={coachRegistrationQrPath} alt="Register as a coach QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} />
+        <p className="muted">https://best-hiit-timer-portal.vercel.app/</p>
       </div>
       <div className="row">
         <button className="button" disabled={saveDisabled} onClick={() => void save()}>Save</button>
