@@ -116,24 +116,25 @@ describe('BrandingPage', () => {
     expect(await screen.findByText('Register as a coach')).toBeInTheDocument();
     expect(screen.getByAltText('Register as a coach QR code')).toBeInTheDocument();
     expect(screen.getByText('https://best-hiit-timer-portal.vercel.app/')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open Timer App' })).toBeInTheDocument();
+    expect(screen.getAllByText('Register as an athlete')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Register as an athlete' })).toBeInTheDocument();
   });
 
   it('enables open timer app button for published profiles', async () => {
     render(<BrandingPage />);
-    expect(await screen.findByRole('button', { name: 'Open Timer App' })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'Register as an athlete' })).toBeEnabled();
   });
 
   it('disables open timer app button for draft profiles', async () => {
     vi.mocked(portalApi.getBranding).mockResolvedValue({ ...baseBranding, status: 'draft', publishedAt: null } as never);
     render(<BrandingPage />);
-    expect(await screen.findByRole('button', { name: 'Open Timer App' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Register as an athlete' })).toBeDisabled();
   });
 
   it('opens timer app in a new tab using the current slug', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     render(<BrandingPage />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Open Timer App' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Register as an athlete' }));
     expect(openSpy).toHaveBeenCalledWith('https://best-hiit-timer.vercel.app/slug-one', '_blank', 'noopener,noreferrer');
     openSpy.mockRestore();
   });

@@ -179,17 +179,26 @@ export function BrandingPage() {
       </div>
       <div className="panel">
         <h3>QR Code</h3>
-        <p><strong>Register as a coach</strong></p>
-        <img src={coachRegistrationQrPath} alt="Register as a coach QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} />
-        <p className="muted">https://best-hiit-timer-portal.vercel.app/</p>
-        <button
-          className="button"
-          type="button"
-          disabled={openTimerDisabled}
-          onClick={() => window.open(timerUrl, '_blank', 'noopener,noreferrer')}
-        >
-          Open Timer App
-        </button>
+        <div className="grid2">
+          <div>
+            <p><strong>Register as a coach</strong></p>
+            <img src={coachRegistrationQrPath} alt="Register as a coach QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} />
+            <p className="muted">https://best-hiit-timer-portal.vercel.app/</p>
+          </div>
+          <div>
+            <p><strong>Register as an athlete</strong></p>
+            {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Register as an athlete QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} /> : <p className="muted">No QR code generated yet.</p>}
+            <p className="muted">{timerUrl}</p>
+            <button
+              className="button"
+              type="button"
+              disabled={openTimerDisabled}
+              onClick={() => window.open(timerUrl, '_blank', 'noopener,noreferrer')}
+            >
+              Register as an athlete
+            </button>
+          </div>
+        </div>
       </div>
       <div className="row">
         <button className="button" disabled={saveDisabled} onClick={() => void save()}>Save</button>
