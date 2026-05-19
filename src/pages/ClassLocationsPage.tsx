@@ -43,6 +43,15 @@ export function ClassLocationsPage() {
     }
   };
 
+  const setDefault = async (id: string) => {
+    try {
+      await portalApi.setDefaultClassLocation(id);
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
   return (
     <section className="panel page-section">
       <div className="row spread">
@@ -59,6 +68,7 @@ export function ClassLocationsPage() {
                 <th>Business</th>
                 <th>Location</th>
                 <th>Logo</th>
+                <th>Default</th>
                 <th>Updated</th>
                 <th>Actions</th>
               </tr>
@@ -72,6 +82,13 @@ export function ClassLocationsPage() {
                     {loc.logoUrl
                       ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(loc.logoUrl)}`} alt={`${loc.businessName} logo`} style={{ height: '32px', width: 'auto', verticalAlign: 'middle' }} />
                       : <span className="muted">&mdash;</span>}
+                  </td>
+                  <td>
+                    {loc.isDefault
+                      ? <span className="badge">Default</span>
+                      : locations.length > 1 && (
+                        <button className="button-small" onClick={() => void setDefault(loc.id)}>Set as Default</button>
+                      )}
                   </td>
                   <td>{loc.updatedAt}</td>
                   <td className="actions">

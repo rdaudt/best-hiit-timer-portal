@@ -30,12 +30,13 @@ const hasColumn = async (table: string, column: string): Promise<boolean> => {
   return result.rows.some((row) => String((row as Record<string, unknown>).name) === column);
 };
 
-const addColumnIfMissing = async (table: string, columnDef: string, columnName: string) => {
+const addColumnIfMissing = async (table: string, columnDef: string, columnName: string): Promise<boolean> => {
   if (await hasColumn(table, columnName)) {
-    return;
+    return false;
   }
   const db = getDb();
   await db.execute(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
+  return true;
 };
 
 export async function createCoachTenantTablesIfNeeded() {
@@ -145,6 +146,30 @@ export async function createCoachTenantTablesIfNeeded() {
   await addColumnIfMissing('coach_templates', 'archived_at TEXT', 'archived_at');
   await addColumnIfMissing('coach_templates', 'updated_by_google_sub TEXT', 'updated_by_google_sub');
   await addColumnIfMissing('coach_templates', 'updated_by_email TEXT', 'updated_by_email');
+
+  const isDefaultAdded = await addColumnIfMissing('coach_class_locations', 'is_default INTEGER NOT NULL DEFAULT 0', 'is_default');
+  if (isDefaultAdded) {
+    await db.execute(`
+      UPDATE coach_class_locations
+      SET is_default = 1
+      WHERE id IN (
+        SELECT (
+          SELECT id FROM coach_class_locations
+          WHERE tenant_id = t.tenant_id
+          ORDER BY sort_order ASC, created_at ASC
+          LIMIT 1
+        )
+        FROM (
+          SELECT DISTINCT tenant_id
+          FROM coach_class_locations
+          WHERE NOT EXISTS (
+            SELECT 1 FROM coach_class_locations cl2
+            WHERE cl2.tenant_id = coach_class_locations.tenant_id AND cl2.is_default = 1
+          )
+        ) t
+      )
+    `);
+  }
 }
 
 export async function createAnalyticsTablesIfNeeded() {

@@ -13,9 +13,10 @@ type FormState = {
   businessName: string;
   locationName: string;
   logoUrl: string;
+  isDefault: boolean;
 };
 
-const emptyForm = (): FormState => ({ businessName: '', locationName: '', logoUrl: '' });
+const emptyForm = (): FormState => ({ businessName: '', locationName: '', logoUrl: '', isDefault: false });
 
 export function ClassLocationEditorPage() {
   const { id = 'new' } = useParams();
@@ -29,7 +30,7 @@ export function ClassLocationEditorPage() {
     void (async () => {
       try {
         const data = await portalApi.getClassLocation(id);
-        setForm({ businessName: data.businessName, locationName: data.locationName, logoUrl: data.logoUrl });
+        setForm({ businessName: data.businessName, locationName: data.locationName, logoUrl: data.logoUrl, isDefault: data.isDefault });
       } catch (err) {
         setError((err as Error).message);
       }
@@ -71,6 +72,19 @@ export function ClassLocationEditorPage() {
     }
   };
 
+  const setDefault = async () => {
+    try {
+      setIsMutating(true);
+      setError('');
+      await portalApi.setDefaultClassLocation(id);
+      setForm((f) => ({ ...f, isDefault: true }));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
   const isNew = id === 'new';
 
   return (
@@ -99,25 +113,36 @@ export function ClassLocationEditorPage() {
         </label>
       </div>
       {!isNew && (
-        <div>
-          <p>Business Logo <span className="muted">(optional)</span></p>
-          <div className="asset-preview-grid">
-            <div className="asset-preview-card">
-              {form.logoUrl
-                ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(form.logoUrl)}`} alt="Business logo preview" className="asset-preview-image" />
-                : <div className="asset-preview-placeholder">No logo</div>}
+        <>
+          <div>
+            <p>Business Logo <span className="muted">(optional)</span></p>
+            <div className="asset-preview-grid">
+              <div className="asset-preview-card">
+                {form.logoUrl
+                  ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(form.logoUrl)}`} alt="Business logo preview" className="asset-preview-image" />
+                  : <div className="asset-preview-placeholder">No logo</div>}
+              </div>
             </div>
+            <label>
+              Upload Logo
+              <input
+                type="file"
+                accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                disabled={isMutating}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); }}
+              />
+            </label>
           </div>
-          <label>
-            Upload Logo
-            <input
-              type="file"
-              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-              disabled={isMutating}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); }}
-            />
-          </label>
-        </div>
+          <div className="row">
+            {form.isDefault
+              ? <span className="badge">Default location</span>
+              : (
+                <button className="button-secondary" disabled={isMutating} onClick={() => void setDefault()}>
+                  Set as Default
+                </button>
+              )}
+          </div>
+        </>
       )}
       {isNew && <p className="muted">Save the location first, then you can upload a logo.</p>}
       <div className="row">

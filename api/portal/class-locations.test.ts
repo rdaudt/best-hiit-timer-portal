@@ -43,6 +43,7 @@ const makeRow = (overrides: Record<string, unknown> = {}) => ({
   business_name: 'Infinity Fitness',
   location_name: 'Mission, BC',
   logo_url: '',
+  is_default: 0,
   sort_order: 0,
   created_at: '2024-01-01T00:00:00.000Z',
   updated_at: '2024-01-01T00:00:00.000Z',
@@ -110,7 +111,8 @@ describe('portal class-locations api', () => {
 
   it('returns 409 on duplicate location', async () => {
     vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
-    const mockExecute = vi.fn().mockRejectedValue(new Error('UNIQUE constraint failed: coach_class_locations'));
+    const mockExecute = vi.fn()
+      .mockRejectedValueOnce(new Error('UNIQUE constraint failed: coach_class_locations'));
     vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
 
     const res = makeRes();
@@ -152,10 +154,10 @@ describe('portal class-locations api', () => {
 
   it('deletes existing location', async () => {
     vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
-    const row = makeRow();
+    const row = makeRow({ is_default: 0 });
     const mockExecute = vi.fn()
-      .mockResolvedValueOnce({ rows: [row] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [row] })  // loadLocation
+      .mockResolvedValueOnce({ rows: [] });    // DELETE
     vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
 
     const res = makeRes();
@@ -164,12 +166,31 @@ describe('portal class-locations api', () => {
     expect(res.payload.code).toBe(200);
   });
 
+  it('DELETE promotes sole remaining location to default when deleting the default', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
+    const deletedRow = makeRow({ id: 'loc1', is_default: 1 });
+    const remainingRow = makeRow({ id: 'loc2', is_default: 0, location_name: 'Downtown' });
+    const mockExecute = vi.fn()
+      .mockResolvedValueOnce({ rows: [deletedRow] })     // loadLocation (guard)
+      .mockResolvedValueOnce({ rows: [] })                // DELETE
+      .mockResolvedValueOnce({ rows: [remainingRow] })   // SELECT remaining
+      .mockResolvedValueOnce({ rows: [] });               // UPDATE remaining to is_default=1
+    vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
+
+    const res = makeRes();
+    await handler({ method: 'DELETE', query: { id: 'loc1' } }, res as never);
+
+    expect(res.payload.code).toBe(200);
+    // The 4th execute call should be the auto-promote UPDATE
+    expect(mockExecute).toHaveBeenCalledTimes(4);
+  });
+
   it('accepts empty logoUrl on create', async () => {
     vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
     const row = makeRow();
     const mockExecute = vi.fn()
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [row] });
+      .mockResolvedValueOnce({ rows: [] })   // INSERT (with embedded count subquery)
+      .mockResolvedValueOnce({ rows: [row] }); // SELECT after insert
     vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
 
     const res = makeRes();
@@ -178,12 +199,52 @@ describe('portal class-locations api', () => {
     expect(res.payload.code).toBe(201);
   });
 
+  it('POST sets isDefault=true when creating the first location', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
+    const row = makeRow({ is_default: 1 });
+    const mockExecute = vi.fn()
+      .mockResolvedValueOnce({ rows: [] })              // INSERT (embedded count yields is_default=1)
+      .mockResolvedValueOnce({ rows: [row] });          // SELECT after insert
+    vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
+
+    const res = makeRes();
+    await handler({ method: 'POST', body: { businessName: 'Infinity Fitness', locationName: 'Mission, BC' } }, res as never);
+
+    expect(res.payload.code).toBe(201);
+    expect((res.payload.body as { data: { isDefault: boolean } }).data.isDefault).toBe(true);
+  });
+
+  it('PATCH sets a location as default and returns 200', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
+    const row = makeRow({ is_default: 1 });
+    const mockExecute = vi.fn().mockResolvedValue({ rows: [row] });
+    const mockBatch = vi.fn().mockResolvedValue([]);
+    vi.mocked(getDb).mockReturnValue({ execute: mockExecute, batch: mockBatch } as never);
+
+    const res = makeRes();
+    await handler({ method: 'PATCH', query: { id: 'loc1' } }, res as never);
+
+    expect(res.payload.code).toBe(200);
+    expect((res.payload.body as { data: { isDefault: boolean } }).data.isDefault).toBe(true);
+    expect(mockBatch).toHaveBeenCalledOnce();
+  });
+
+  it('PATCH returns 404 for unknown location', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
+    vi.mocked(getDb).mockReturnValue({ execute: vi.fn().mockResolvedValue({ rows: [] }) } as never);
+
+    const res = makeRes();
+    await handler({ method: 'PATCH', query: { id: 'nonexistent' } }, res as never);
+
+    expect(res.payload.code).toBe(404);
+  });
+
   it('returns 405 for unsupported method', async () => {
     vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
     vi.mocked(getDb).mockReturnValue({ execute: vi.fn() } as never);
 
     const res = makeRes();
-    await handler({ method: 'PATCH', query: { id: 'loc1' } }, res as never);
+    await handler({ method: 'OPTIONS', query: { id: 'loc1' } }, res as never);
 
     expect(res.payload.code).toBe(405);
   });

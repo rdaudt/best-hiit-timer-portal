@@ -49,6 +49,7 @@ export const portalApi = {
   createClassLocation: (payload: Record<string, unknown>) => api<ClassLocation>('/api/portal/class-locations', { method: 'POST', body: JSON.stringify(payload) }),
   updateClassLocation: (id: string, payload: Record<string, unknown>) => api<ClassLocation>(`/api/portal/class-locations?id=${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deleteClassLocation: (id: string) => api<{ id: string }>(`/api/portal/class-locations?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  setDefaultClassLocation: (id: string) => api<ClassLocation>(`/api/portal/class-locations?id=${encodeURIComponent(id)}`, { method: 'PATCH' }),
 
   getAnalyticsSummary: (dateFrom: string, dateTo: string) => api<AnalyticsSummary>(`/api/portal/analytics-summary?dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}`),
 
