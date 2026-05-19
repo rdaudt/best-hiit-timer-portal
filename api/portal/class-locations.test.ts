@@ -111,7 +111,9 @@ describe('portal class-locations api', () => {
 
   it('returns 409 on duplicate location', async () => {
     vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
-    const mockExecute = vi.fn().mockRejectedValue(new Error('UNIQUE constraint failed: coach_class_locations'));
+    const mockExecute = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ cnt: 1 }] })  // COUNT succeeds
+      .mockRejectedValueOnce(new Error('UNIQUE constraint failed: coach_class_locations'));
     vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
 
     const res = makeRes();
@@ -169,14 +171,31 @@ describe('portal class-locations api', () => {
     vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
     const row = makeRow();
     const mockExecute = vi.fn()
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [row] });
+      .mockResolvedValueOnce({ rows: [{ cnt: 1 }] })  // COUNT existing
+      .mockResolvedValueOnce({ rows: [] })              // INSERT
+      .mockResolvedValueOnce({ rows: [row] });          // SELECT after insert
     vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
 
     const res = makeRes();
     await handler({ method: 'POST', body: { businessName: 'Infinity Fitness', locationName: 'Mission, BC', logoUrl: '' } }, res as never);
 
     expect(res.payload.code).toBe(201);
+  });
+
+  it('POST sets isDefault=true when creating the first location', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
+    const row = makeRow({ is_default: 1 });
+    const mockExecute = vi.fn()
+      .mockResolvedValueOnce({ rows: [{ cnt: 0 }] })  // COUNT = 0 (first location)
+      .mockResolvedValueOnce({ rows: [] })              // INSERT
+      .mockResolvedValueOnce({ rows: [row] });          // SELECT after insert
+    vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
+
+    const res = makeRes();
+    await handler({ method: 'POST', body: { businessName: 'Infinity Fitness', locationName: 'Mission, BC' } }, res as never);
+
+    expect(res.payload.code).toBe(201);
+    expect((res.payload.body as { data: { isDefault: boolean } }).data.isDefault).toBe(true);
   });
 
   it('PATCH sets a location as default and returns 200', async () => {
