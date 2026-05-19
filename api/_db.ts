@@ -145,6 +145,8 @@ export async function createCoachTenantTablesIfNeeded() {
   await addColumnIfMissing('coach_templates', 'archived_at TEXT', 'archived_at');
   await addColumnIfMissing('coach_templates', 'updated_by_google_sub TEXT', 'updated_by_google_sub');
   await addColumnIfMissing('coach_templates', 'updated_by_email TEXT', 'updated_by_email');
+
+  await addColumnIfMissing('coach_class_locations', 'is_default INTEGER NOT NULL DEFAULT 0', 'is_default');
 }
 
 export async function createAnalyticsTablesIfNeeded() {

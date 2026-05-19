@@ -54,6 +54,7 @@ export type ClassLocation = {
   businessName: string;
   locationName: string;
   logoUrl: string;
+  isDefault: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;

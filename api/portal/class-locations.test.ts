@@ -43,6 +43,7 @@ const makeRow = (overrides: Record<string, unknown> = {}) => ({
   business_name: 'Infinity Fitness',
   location_name: 'Mission, BC',
   logo_url: '',
+  is_default: 0,
   sort_order: 0,
   created_at: '2024-01-01T00:00:00.000Z',
   updated_at: '2024-01-01T00:00:00.000Z',
@@ -183,7 +184,7 @@ describe('portal class-locations api', () => {
     vi.mocked(getDb).mockReturnValue({ execute: vi.fn() } as never);
 
     const res = makeRes();
-    await handler({ method: 'PATCH', query: { id: 'loc1' } }, res as never);
+    await handler({ method: 'OPTIONS', query: { id: 'loc1' } }, res as never);
 
     expect(res.payload.code).toBe(405);
   });
