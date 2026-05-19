@@ -81,13 +81,6 @@ export default async function handler(req: NodeReq, res: NodeRes) {
       return;
     }
 
-    const countResult = await db.execute({
-      sql: `SELECT COUNT(*) as cnt FROM coach_class_locations WHERE tenant_id = ?`,
-      args: [auth.session.workspaceId],
-    });
-    const existingCount = Number((countResult.rows[0] as Record<string, unknown>)?.cnt ?? 0);
-    const isDefault = existingCount === 0 ? 1 : 0;
-
     const newId = randomUUID();
     const now = nowIso();
     try {
@@ -96,9 +89,11 @@ export default async function handler(req: NodeReq, res: NodeRes) {
           INSERT INTO coach_class_locations (
             id, tenant_id, business_name, location_name, logo_url, is_default, sort_order,
             created_at, updated_at, updated_by_google_sub, updated_by_email
-          ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?,
+            (SELECT CASE WHEN COUNT(*) = 0 THEN 1 ELSE 0 END FROM coach_class_locations WHERE tenant_id = ?),
+            0, ?, ?, ?, ?)
         `,
-        args: [newId, auth.session.workspaceId, payload.businessName, payload.locationName, payload.logoUrl, isDefault, now, now, auth.session.sub, auth.session.email],
+        args: [newId, auth.session.workspaceId, payload.businessName, payload.locationName, payload.logoUrl, auth.session.workspaceId, now, now, auth.session.sub, auth.session.email],
       });
     } catch (err) {
       if (isDuplicateError(err)) {
