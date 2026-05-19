@@ -48,6 +48,17 @@ export type Template = {
   archivedAt: string | null;
 };
 
+export type ClassLocation = {
+  id: string;
+  tenantId: string;
+  businessName: string;
+  locationName: string;
+  logoUrl: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AnalyticsSummary = {
   totals: {
     appOpened: number;
