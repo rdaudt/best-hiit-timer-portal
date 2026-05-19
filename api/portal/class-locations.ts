@@ -181,10 +181,23 @@ export default async function handler(req: NodeReq, res: NodeRes) {
       res.status(404).json(errorResponse('NOT_FOUND', 'Location not found.'));
       return;
     }
+    const wasDefault = Boolean(current.is_default);
     await db.execute({
       sql: `DELETE FROM coach_class_locations WHERE id = ? AND tenant_id = ?`,
       args: [id, auth.session.workspaceId],
     });
+    if (wasDefault) {
+      const remaining = await db.execute({
+        sql: `SELECT * FROM coach_class_locations WHERE tenant_id = ? ORDER BY sort_order ASC, updated_at DESC`,
+        args: [auth.session.workspaceId],
+      });
+      if (remaining.rows.length === 1) {
+        await db.execute({
+          sql: `UPDATE coach_class_locations SET is_default=1 WHERE id=? AND tenant_id=?`,
+          args: [String((remaining.rows[0] as Record<string, unknown>).id), auth.session.workspaceId],
+        });
+      }
+    }
     res.status(200).json({ data: { id } });
     return;
   }

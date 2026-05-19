@@ -155,16 +155,35 @@ describe('portal class-locations api', () => {
 
   it('deletes existing location', async () => {
     vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
-    const row = makeRow();
+    const row = makeRow({ is_default: 0 });
     const mockExecute = vi.fn()
-      .mockResolvedValueOnce({ rows: [row] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [row] })  // loadLocation
+      .mockResolvedValueOnce({ rows: [] });    // DELETE
     vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
 
     const res = makeRes();
     await handler({ method: 'DELETE', query: { id: 'loc1' } }, res as never);
 
     expect(res.payload.code).toBe(200);
+  });
+
+  it('DELETE promotes sole remaining location to default when deleting the default', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
+    const deletedRow = makeRow({ id: 'loc1', is_default: 1 });
+    const remainingRow = makeRow({ id: 'loc2', is_default: 0, location_name: 'Downtown' });
+    const mockExecute = vi.fn()
+      .mockResolvedValueOnce({ rows: [deletedRow] })     // loadLocation (guard)
+      .mockResolvedValueOnce({ rows: [] })                // DELETE
+      .mockResolvedValueOnce({ rows: [remainingRow] })   // SELECT remaining
+      .mockResolvedValueOnce({ rows: [] });               // UPDATE remaining to is_default=1
+    vi.mocked(getDb).mockReturnValue({ execute: mockExecute } as never);
+
+    const res = makeRes();
+    await handler({ method: 'DELETE', query: { id: 'loc1' } }, res as never);
+
+    expect(res.payload.code).toBe(200);
+    // The 4th execute call should be the auto-promote UPDATE
+    expect(mockExecute).toHaveBeenCalledTimes(4);
   });
 
   it('accepts empty logoUrl on create', async () => {
