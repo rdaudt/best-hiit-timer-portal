@@ -105,6 +105,22 @@ export async function createCoachTenantTablesIfNeeded() {
     `CREATE INDEX IF NOT EXISTS idx_coach_tenants_owner_sub ON coach_tenants(owner_google_sub);`,
     `CREATE INDEX IF NOT EXISTS idx_coach_tenants_slug ON coach_tenants(slug);`,
     `CREATE INDEX IF NOT EXISTS idx_coach_templates_tenant_status_sort ON coach_templates (tenant_id, status, sort_order);`,
+    `
+      CREATE TABLE IF NOT EXISTS coach_class_locations (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        business_name TEXT NOT NULL,
+        location_name TEXT NOT NULL,
+        logo_url TEXT NOT NULL DEFAULT '',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        updated_by_google_sub TEXT,
+        updated_by_email TEXT
+      );
+    `,
+    `CREATE INDEX IF NOT EXISTS idx_class_locations_tenant ON coach_class_locations(tenant_id, sort_order, updated_at);`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS uq_class_locations_tenant_names ON coach_class_locations(tenant_id, LOWER(business_name), LOWER(location_name));`,
   ], 'write');
 
   await addColumnIfMissing('coach_tenants', "bio TEXT NOT NULL DEFAULT ''", 'bio');

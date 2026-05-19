@@ -6,6 +6,8 @@ import { DashboardPage } from './pages/DashboardPage';
 import { BrandingPage } from './pages/BrandingPage';
 import { TemplatesPage } from './pages/TemplatesPage';
 import { TemplateEditorPage } from './pages/TemplateEditorPage';
+import { ClassLocationsPage } from './pages/ClassLocationsPage';
+import { ClassLocationEditorPage } from './pages/ClassLocationEditorPage';
 
 export default function App() {
   return (
@@ -24,6 +26,9 @@ export default function App() {
         <Route path="templates" element={<TemplatesPage />} />
         <Route path="templates/new" element={<TemplateEditorPage />} />
         <Route path="templates/:id" element={<TemplateEditorPage />} />
+        <Route path="class-locations" element={<ClassLocationsPage />} />
+        <Route path="class-locations/new" element={<ClassLocationEditorPage />} />
+        <Route path="class-locations/:id" element={<ClassLocationEditorPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

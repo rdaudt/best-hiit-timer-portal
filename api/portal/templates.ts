@@ -76,6 +76,7 @@ function parseTemplatePayload(body: unknown) {
     cooldownEnabled: asBoolean(obj.cooldownEnabled),
     cooldownMinutes: asNumber(obj.cooldownMinutes, 0),
     cooldownSeconds: asNumber(obj.cooldownSeconds, 0),
+    expectedUpdatedAt: asString(obj.expectedUpdatedAt),
   };
 }
 
@@ -92,6 +93,14 @@ function validateTemplateInput(template: ReturnType<typeof parseTemplatePayload>
   return '';
 }
 
+async function loadTemplate(db: ReturnType<typeof getDb>, templateId: string, tenantId: string) {
+  const result = await db.execute({
+    sql: `SELECT * FROM coach_templates WHERE id = ? AND tenant_id = ? LIMIT 1`,
+    args: [templateId, tenantId],
+  });
+  return result.rows[0] as Record<string, unknown> | undefined;
+}
+
 export default async function handler(req: NodeReq, res: NodeRes) {
   const auth = await requirePortalSession(req);
   if (!auth.ok) {
@@ -100,8 +109,11 @@ export default async function handler(req: NodeReq, res: NodeRes) {
   }
 
   const db = getDb();
+  const id = typeof req.query?.id === 'string' ? req.query.id : '';
 
-  if (req.method === 'GET') {
+  // --- Collection operations (no id) ---
+
+  if (req.method === 'GET' && !id) {
     const status = typeof req.query?.status === 'string' ? req.query.status : 'all';
     const sql = status === 'all'
       ? `SELECT * FROM coach_templates WHERE tenant_id = ? ORDER BY sort_order ASC, updated_at DESC`
@@ -112,7 +124,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     return;
   }
 
-  if (req.method === 'POST') {
+  if (req.method === 'POST' && !id) {
     const payload = parseTemplatePayload(req.body);
     const validationError = validateTemplateInput(payload);
     if (validationError) {
@@ -120,7 +132,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
       return;
     }
 
-    const id = randomUUID();
+    const newId = randomUUID();
     const now = nowIso();
     await db.execute({
       sql: `
@@ -133,7 +145,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 0, ?, ?, ?, ?)
       `,
       args: [
-        id,
+        newId,
         auth.session.workspaceId,
         payload.name,
         payload.stationCount,
@@ -159,8 +171,145 @@ export default async function handler(req: NodeReq, res: NodeRes) {
       ],
     });
 
-    const inserted = await db.execute({ sql: `SELECT * FROM coach_templates WHERE id = ? LIMIT 1`, args: [id] });
+    const inserted = await db.execute({ sql: `SELECT * FROM coach_templates WHERE id = ? LIMIT 1`, args: [newId] });
     res.status(201).json({ data: mapTemplate(inserted.rows[0] as Record<string, unknown>) });
+    return;
+  }
+
+  // --- Item operations (require id) ---
+
+  if (!id) {
+    res.status(400).json(errorResponse('VALIDATION_ERROR', 'Missing template id.'));
+    return;
+  }
+
+  const current = await loadTemplate(db, id, auth.session.workspaceId);
+  if (!current) {
+    res.status(404).json(errorResponse('NOT_FOUND', 'Template not found.'));
+    return;
+  }
+
+  if (req.method === 'GET') {
+    res.status(200).json({ data: mapTemplate(current) });
+    return;
+  }
+
+  if (req.method === 'PUT') {
+    const payload = parseTemplatePayload(req.body);
+    if (!payload.name) {
+      res.status(400).json(errorResponse('VALIDATION_ERROR', 'name is required'));
+      return;
+    }
+    if (payload.expectedUpdatedAt !== String(current.updated_at ?? '')) {
+      res.status(409).json(errorResponse('CONFLICT', 'Template was updated by another session.'));
+      return;
+    }
+
+    const now = nowIso();
+    await db.execute({
+      sql: `
+        UPDATE coach_templates
+        SET name = ?, station_count = ?, station_workout_types_json = ?, rounds_per_station = ?,
+            work_minutes = ?, work_seconds = ?, rest_minutes = ?, rest_seconds = ?,
+            station_transition_minutes = ?, station_transition_seconds = ?, start_station_work_manually = ?,
+            warmup_enabled = ?, warmup_minutes = ?, warmup_seconds = ?, cooldown_enabled = ?,
+            cooldown_minutes = ?, cooldown_seconds = ?, updated_at = ?, updated_by_google_sub = ?, updated_by_email = ?
+        WHERE id = ? AND tenant_id = ?
+      `,
+      args: [
+        payload.name,
+        payload.stationCount,
+        JSON.stringify(payload.stationWorkoutTypes),
+        payload.roundsPerStation,
+        payload.workMinutes,
+        payload.workSeconds,
+        payload.restMinutes,
+        payload.restSeconds,
+        payload.stationTransitionMinutes,
+        payload.stationTransitionSeconds,
+        payload.startStationWorkManually ? 1 : 0,
+        payload.warmupEnabled ? 1 : 0,
+        payload.warmupMinutes,
+        payload.warmupSeconds,
+        payload.cooldownEnabled ? 1 : 0,
+        payload.cooldownMinutes,
+        payload.cooldownSeconds,
+        now,
+        auth.session.sub,
+        auth.session.email,
+        id,
+        auth.session.workspaceId,
+      ],
+    });
+
+    const next = await loadTemplate(db, id, auth.session.workspaceId);
+    res.status(200).json({ data: mapTemplate(next as Record<string, unknown>) });
+    return;
+  }
+
+  if (req.method === 'POST') {
+    const action = typeof req.query?.action === 'string' ? req.query.action : '';
+    const now = nowIso();
+
+    if (action === 'publish') {
+      await db.execute({
+        sql: `
+          UPDATE coach_templates
+          SET status = 'published', published_at = ?, archived_at = NULL, updated_at = ?,
+              updated_by_google_sub = ?, updated_by_email = ?
+          WHERE id = ? AND tenant_id = ?
+        `,
+        args: [now, now, auth.session.sub, auth.session.email, id, auth.session.workspaceId],
+      });
+    } else if (action === 'archive') {
+      await db.execute({
+        sql: `
+          UPDATE coach_templates
+          SET status = 'archived', archived_at = ?, updated_at = ?, updated_by_google_sub = ?, updated_by_email = ?
+          WHERE id = ? AND tenant_id = ?
+        `,
+        args: [now, now, auth.session.sub, auth.session.email, id, auth.session.workspaceId],
+      });
+    } else if (action === 'unarchive') {
+      await db.execute({
+        sql: `
+          UPDATE coach_templates
+          SET status = 'draft', archived_at = NULL, updated_at = ?, updated_by_google_sub = ?, updated_by_email = ?
+          WHERE id = ? AND tenant_id = ?
+        `,
+        args: [now, auth.session.sub, auth.session.email, id, auth.session.workspaceId],
+      });
+    } else if (action === 'duplicate') {
+      const copyId = randomUUID();
+      await db.execute({
+        sql: `
+          INSERT INTO coach_templates (
+            id, tenant_id, name, station_count, station_workout_types_json, rounds_per_station,
+            work_minutes, work_seconds, rest_minutes, rest_seconds, station_transition_minutes,
+            station_transition_seconds, start_station_work_manually, warmup_enabled, warmup_minutes,
+            warmup_seconds, cooldown_enabled, cooldown_minutes, cooldown_seconds, status, sort_order,
+            created_at, updated_at, updated_by_google_sub, updated_by_email
+          )
+          SELECT ?, tenant_id, name || ' (Copy)', station_count, station_workout_types_json, rounds_per_station,
+                 work_minutes, work_seconds, rest_minutes, rest_seconds, station_transition_minutes,
+                 station_transition_seconds, start_station_work_manually, warmup_enabled, warmup_minutes,
+                 warmup_seconds, cooldown_enabled, cooldown_minutes, cooldown_seconds, 'draft', sort_order,
+                 ?, ?, ?, ?
+          FROM coach_templates
+          WHERE id = ? AND tenant_id = ?
+        `,
+        args: [copyId, now, now, auth.session.sub, auth.session.email, id, auth.session.workspaceId],
+      });
+      const created = await loadTemplate(db, copyId, auth.session.workspaceId);
+      res.status(201).json({ data: mapTemplate(created as Record<string, unknown>) });
+      return;
+    } else {
+      res.status(400).json(errorResponse('VALIDATION_ERROR', 'Unsupported action.'));
+      return;
+    }
+
+    const next = await loadTemplate(db, id, auth.session.workspaceId);
+    res.status(200).json({ data: mapTemplate(next as Record<string, unknown>) });
     return;
   }
 

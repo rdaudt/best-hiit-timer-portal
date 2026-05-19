@@ -1,4 +1,4 @@
-import type { AnalyticsSummary, Branding, Template } from '../types/portal';
+import type { AnalyticsSummary, Branding, ClassLocation, Template } from '../types/portal';
 
 async function api<T>(input: string, init?: RequestInit): Promise<T> {
   const response = await fetch(input, {
@@ -40,9 +40,15 @@ export const portalApi = {
 
   listTemplates: (status = 'all') => api<Template[]>(`/api/portal/templates?status=${encodeURIComponent(status)}`),
   createTemplate: (payload: Record<string, unknown>) => api<Template>('/api/portal/templates', { method: 'POST', body: JSON.stringify(payload) }),
-  getTemplate: (id: string) => api<Template>(`/api/portal/template?id=${encodeURIComponent(id)}`),
-  updateTemplate: (id: string, payload: Record<string, unknown>) => api<Template>(`/api/portal/template?id=${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  templateAction: (id: string, action: 'publish' | 'archive' | 'unarchive' | 'duplicate') => api<Template>(`/api/portal/template?id=${encodeURIComponent(id)}&action=${action}`, { method: 'POST' }),
+  getTemplate: (id: string) => api<Template>(`/api/portal/templates?id=${encodeURIComponent(id)}`),
+  updateTemplate: (id: string, payload: Record<string, unknown>) => api<Template>(`/api/portal/templates?id=${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  templateAction: (id: string, action: 'publish' | 'archive' | 'unarchive' | 'duplicate') => api<Template>(`/api/portal/templates?id=${encodeURIComponent(id)}&action=${action}`, { method: 'POST' }),
+
+  listClassLocations: () => api<ClassLocation[]>('/api/portal/class-locations'),
+  getClassLocation: (id: string) => api<ClassLocation>(`/api/portal/class-locations?id=${encodeURIComponent(id)}`),
+  createClassLocation: (payload: Record<string, unknown>) => api<ClassLocation>('/api/portal/class-locations', { method: 'POST', body: JSON.stringify(payload) }),
+  updateClassLocation: (id: string, payload: Record<string, unknown>) => api<ClassLocation>(`/api/portal/class-locations?id=${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deleteClassLocation: (id: string) => api<{ id: string }>(`/api/portal/class-locations?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   getAnalyticsSummary: (dateFrom: string, dateTo: string) => api<AnalyticsSummary>(`/api/portal/analytics-summary?dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}`),
 
