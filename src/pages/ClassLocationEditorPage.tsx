@@ -104,7 +104,7 @@ export function ClassLocationEditorPage() {
           <div className="asset-preview-grid">
             <div className="asset-preview-card">
               {form.logoUrl
-                ? <img src={form.logoUrl} alt="Business logo preview" className="asset-preview-image" />
+                ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(form.logoUrl)}`} alt="Business logo preview" className="asset-preview-image" />
                 : <div className="asset-preview-placeholder">No logo</div>}
             </div>
           </div>

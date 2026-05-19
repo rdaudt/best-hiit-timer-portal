@@ -70,7 +70,7 @@ export function ClassLocationsPage() {
                   <td>{loc.locationName}</td>
                   <td>
                     {loc.logoUrl
-                      ? <img src={loc.logoUrl} alt={`${loc.businessName} logo`} style={{ height: '32px', width: 'auto', verticalAlign: 'middle' }} />
+                      ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(loc.logoUrl)}`} alt={`${loc.businessName} logo`} style={{ height: '32px', width: 'auto', verticalAlign: 'middle' }} />
                       : <span className="muted">&mdash;</span>}
                   </td>
                   <td>{loc.updatedAt}</td>
