@@ -14,6 +14,7 @@ function mapClassLocation(row: Record<string, unknown>) {
     businessName: String(row.business_name),
     locationName: String(row.location_name),
     logoUrl: String(row.logo_url ?? ''),
+    isDefault: Boolean(row.is_default),
     sortOrder: Number(row.sort_order ?? 0),
     createdAt: String(row.created_at ?? ''),
     updatedAt: String(row.updated_at ?? ''),
@@ -178,6 +179,21 @@ export default async function handler(req: NodeReq, res: NodeRes) {
       args: [id, auth.session.workspaceId],
     });
     res.status(200).json({ data: { id } });
+    return;
+  }
+
+  if (req.method === 'PATCH') {
+    const current = await loadLocation(db, id, auth.session.workspaceId);
+    if (!current) {
+      res.status(404).json(errorResponse('NOT_FOUND', 'Location not found.'));
+      return;
+    }
+    await db.batch([
+      { sql: `UPDATE coach_class_locations SET is_default=0 WHERE tenant_id=?`, args: [auth.session.workspaceId] },
+      { sql: `UPDATE coach_class_locations SET is_default=1 WHERE id=? AND tenant_id=?`, args: [id, auth.session.workspaceId] },
+    ], 'write');
+    const next = await loadLocation(db, id, auth.session.workspaceId);
+    res.status(200).json({ data: mapClassLocation(next as Record<string, unknown>) });
     return;
   }
 

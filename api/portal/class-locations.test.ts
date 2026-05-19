@@ -179,6 +179,31 @@ describe('portal class-locations api', () => {
     expect(res.payload.code).toBe(201);
   });
 
+  it('PATCH sets a location as default and returns 200', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
+    const row = makeRow({ is_default: 1 });
+    const mockExecute = vi.fn().mockResolvedValue({ rows: [row] });
+    const mockBatch = vi.fn().mockResolvedValue([]);
+    vi.mocked(getDb).mockReturnValue({ execute: mockExecute, batch: mockBatch } as never);
+
+    const res = makeRes();
+    await handler({ method: 'PATCH', query: { id: 'loc1' } }, res as never);
+
+    expect(res.payload.code).toBe(200);
+    expect((res.payload.body as { data: { isDefault: boolean } }).data.isDefault).toBe(true);
+    expect(mockBatch).toHaveBeenCalledOnce();
+  });
+
+  it('PATCH returns 404 for unknown location', async () => {
+    vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
+    vi.mocked(getDb).mockReturnValue({ execute: vi.fn().mockResolvedValue({ rows: [] }) } as never);
+
+    const res = makeRes();
+    await handler({ method: 'PATCH', query: { id: 'nonexistent' } }, res as never);
+
+    expect(res.payload.code).toBe(404);
+  });
+
   it('returns 405 for unsupported method', async () => {
     vi.mocked(requirePortalSession).mockResolvedValue(mockSession as never);
     vi.mocked(getDb).mockReturnValue({ execute: vi.fn() } as never);
