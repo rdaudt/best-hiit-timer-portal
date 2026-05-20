@@ -273,7 +273,7 @@ export async function createWorkspaceForOwner(args: CreateWorkspaceArgs) {
         id, slug, owner_google_sub, owner_email, business_name, coach_name, bio,
         logo_url, coach_photo_url, coach_header_image_url, header_tagline, ig_username, tiktok_username, qr_code_url, theme_primary_color,
         theme_secondary_color, brand_headline, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '', '', '', '#f97316', '#111827', '', 'draft', ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '', '', '', '', '#f97316', '#111827', '', 'draft', ?, ?)
     `,
     args: [id, args.slug, args.ownerGoogleSub, args.ownerEmail, businessName, coachName, now, now],
   });
