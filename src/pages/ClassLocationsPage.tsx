@@ -62,42 +62,44 @@ export function ClassLocationsPage() {
       {locations.length === 0
         ? <p className="muted">No locations yet. Add your first class location.</p>
         : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Business</th>
-                <th>Location</th>
-                <th>Logo</th>
-                <th>Default</th>
-                <th>Updated</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {locations.map((loc) => (
-                <tr key={loc.id}>
-                  <td><Link to={`/class-locations/${loc.id}`}>{loc.businessName}</Link></td>
-                  <td>{loc.locationName}</td>
-                  <td>
-                    {loc.logoUrl
-                      ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(loc.logoUrl)}`} alt={`${loc.businessName} logo`} className="table-logo" />
-                      : <span className="muted">&mdash;</span>}
-                  </td>
-                  <td>
-                    {loc.isDefault
-                      ? <span className="badge">Default</span>
-                      : locations.length > 1 && (
-                        <button className="button-small" onClick={() => void setDefault(loc.id)}>Set as Default</button>
-                      )}
-                  </td>
-                  <td>{loc.updatedAt}</td>
-                  <td className="actions">
-                    <button onClick={() => void remove(loc.id, `${loc.businessName} – ${loc.locationName}`)}>Delete</button>
-                  </td>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Business</th>
+                  <th>Location</th>
+                  <th>Logo</th>
+                  <th>Default</th>
+                  <th>Updated</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {locations.map((loc) => (
+                  <tr key={loc.id}>
+                    <td><Link to={`/class-locations/${loc.id}`}>{loc.businessName}</Link></td>
+                    <td>{loc.locationName}</td>
+                    <td>
+                      {loc.logoUrl
+                        ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(loc.logoUrl)}`} alt={`${loc.businessName} logo`} className="table-logo" />
+                        : <span className="muted">&mdash;</span>}
+                    </td>
+                    <td>
+                      {loc.isDefault
+                        ? <span className="badge">Default</span>
+                        : locations.length > 1 && (
+                          <button className="button-small" onClick={() => void setDefault(loc.id)}>Set as Default</button>
+                        )}
+                    </td>
+                    <td>{loc.updatedAt}</td>
+                    <td className="actions">
+                      <button onClick={() => void remove(loc.id, `${loc.businessName} – ${loc.locationName}`)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
     </section>
   );

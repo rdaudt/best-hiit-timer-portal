@@ -24,6 +24,10 @@ export function PortalLayout() {
       <main className="content">
         <Outlet />
       </main>
+      <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
+        <NavLink to="/branding" className="mobile-tab-link">Profile</NavLink>
+        <NavLink to="/class-locations" className="mobile-tab-link">Class Locations</NavLink>
+      </nav>
     </div>
   );
 }

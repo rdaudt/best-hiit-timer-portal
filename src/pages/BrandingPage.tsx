@@ -148,14 +148,10 @@ export function BrandingPage() {
         <label>Workspace Slug<input value={branding.slug} onChange={(e) => setBranding({ ...branding, slug: e.target.value.toLowerCase() })} /></label>
         <label>Business Name<input value={branding.businessName} onChange={(e) => setBranding({ ...branding, businessName: e.target.value })} /></label>
         <label>Coach Name<input value={branding.coachName} onChange={(e) => setBranding({ ...branding, coachName: e.target.value })} /></label>
-        <label>Primary Color<input type="color" value={branding.themePrimaryColor} onChange={(e) => setBranding({ ...branding, themePrimaryColor: e.target.value })} /></label>
-        <label>Secondary Color<input type="color" value={branding.themeSecondaryColor} onChange={(e) => setBranding({ ...branding, themeSecondaryColor: e.target.value })} /></label>
       </div>
-      <label>Headline<input value={branding.brandHeadline} onChange={(e) => setBranding({ ...branding, brandHeadline: e.target.value })} /></label>
       <label>Header Tagline<input value={branding.headerTagline} onChange={(e) => setBranding({ ...branding, headerTagline: e.target.value })} /></label>
       <div className="grid2">
         <label>Instagram Username<input value={branding.igUsername} onChange={(e) => setBranding({ ...branding, igUsername: e.target.value.replace(/^@/, '') })} placeholder="yourusername" /></label>
-        <label>TikTok Username<input value={branding.tiktokUsername} onChange={(e) => setBranding({ ...branding, tiktokUsername: e.target.value.replace(/^@/, '') })} placeholder="yourusername" /></label>
       </div>
       <label>Bio<textarea value={branding.bio} onChange={(e) => setBranding({ ...branding, bio: e.target.value })} /></label>
       <div className="asset-preview-grid">
