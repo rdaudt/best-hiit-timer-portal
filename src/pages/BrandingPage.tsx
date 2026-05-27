@@ -213,6 +213,7 @@ export function BrandingPage() {
             <p><strong>Send someone to the HIIT Timer app</strong></p>
             {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Register as an athlete QR code" className="brand-qr-image" /> : <p className="muted">No QR code generated yet.</p>}
             <p className="muted">{timerUrl}</p>
+            <a className="button qr-open-link" href={timerUrl}>Open the HIIT Timer App</a>
           </div>
         </div>
       </div>

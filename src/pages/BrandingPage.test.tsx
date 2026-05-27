@@ -127,6 +127,7 @@ describe('BrandingPage', () => {
     expect(screen.getByText('https://best-hiit-timer-portal.vercel.app/')).toBeInTheDocument();
     expect(screen.getByText('Send someone to the HIIT Timer app')).toBeInTheDocument();
     expect(screen.getByText('https://best-hiit-timer.vercel.app/slug-one')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open the HIIT Timer App' })).toHaveAttribute('href', 'https://best-hiit-timer.vercel.app/slug-one');
   });
 
   it('shows hiit timer qr placeholder when qr code is not generated', async () => {
