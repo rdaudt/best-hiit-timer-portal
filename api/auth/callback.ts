@@ -130,16 +130,18 @@ export default async function handler(req: NodeReq, res: NodeRes) {
           });
         }
 
-        const consumed = await consumeInvite(inviteLookup.invite.id, identity, workspace.workspaceId);
-        if (!consumed) {
-          throw new Error('Invite code was already consumed.');
-        }
       } catch (error) {
         const latest = await findWorkspaceByGoogleSub(identity.sub);
         if (!latest) {
           throw error;
         }
         workspace = latest;
+      }
+
+      const consumed = await consumeInvite(inviteLookup.invite.id, identity, workspace.workspaceId);
+      if (!consumed) {
+        redirectInviteFailure(res, 'used');
+        return;
       }
     }
 

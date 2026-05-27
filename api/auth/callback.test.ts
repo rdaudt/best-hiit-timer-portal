@@ -137,4 +137,21 @@ describe('auth callback', () => {
     expect(res.payload.code).toBe(302);
     expect(res.payload.redirectUrl).toBe('/signin?invite_error=invalid');
   });
+
+  it('does not sign in when invite consumption fails after provisioning', async () => {
+    vi.mocked(exchangeCodeForIdentity).mockResolvedValue({ sub: 'sub1', email: 'coach@example.com' } as never);
+    vi.mocked(findWorkspaceByGoogleSub)
+      .mockResolvedValueOnce(null as never)
+      .mockResolvedValueOnce({ workspaceId: 'w1', workspaceSlug: 'coach' } as never);
+    vi.mocked(workspaceSlugExists).mockResolvedValue(false as never);
+    vi.mocked(findActiveInviteByCode).mockResolvedValue({ status: 'ok', invite: { id: 'invite-1' } } as never);
+    vi.mocked(createWorkspaceForOwner).mockResolvedValue({ workspaceId: 'w1', workspaceSlug: 'coach', deletedAt: null } as never);
+    vi.mocked(consumeInvite).mockResolvedValue(false as never);
+
+    const res = makeRes();
+    await handler({ method: 'GET', query: { code: 'c1', state: 'state123:payload' }, headers: { cookie: 'oidc_state=state123' } }, res as never);
+
+    expect(res.payload.code).toBe(302);
+    expect(res.payload.redirectUrl).toBe('/signin?invite_error=used');
+  });
 });
