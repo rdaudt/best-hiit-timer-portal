@@ -16,9 +16,7 @@ export function PortalLayout() {
         <h1>HIIT Portal</h1>
         <p className="muted">{user?.email}</p>
         <nav className="nav-list">
-          <NavLink to="/" end className="nav-link">Dashboard</NavLink>
-          <NavLink to="/branding" className="nav-link">Profile &amp; Branding</NavLink>
-          <NavLink to="/templates" className="nav-link">Templates</NavLink>
+          <NavLink to="/branding" className="nav-link">Profile</NavLink>
           <NavLink to="/class-locations" className="nav-link">Class Locations</NavLink>
         </nav>
         <button className="button" onClick={onSignOut}>Sign out</button>
