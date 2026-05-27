@@ -142,8 +142,8 @@ export function BrandingPage() {
   return (
     <section className="panel page-section">
       <h2>Profile &amp; Branding</h2>
-      {message && <p className="ok">{message}</p>}
-      {error && <p className="error">{error}</p>}
+      {message && <p className="ok" role="status">{message}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       <div className="grid2">
         <label>Workspace Slug<input value={branding.slug} onChange={(e) => setBranding({ ...branding, slug: e.target.value.toLowerCase() })} /></label>
         <label>Business Name<input value={branding.businessName} onChange={(e) => setBranding({ ...branding, businessName: e.target.value })} /></label>
@@ -177,17 +177,17 @@ export function BrandingPage() {
         <label>Coach Photo<input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-photo', f); }} /></label>
         <label>Coach Header Image<input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-header-image', f); }} /></label>
       </div>
-      <div className="panel">
+      <div className="panel panel-subtle">
         <h3>QR Code</h3>
         <div className="grid2">
           <div>
             <p><strong>Register as a coach</strong></p>
-            <img src={coachRegistrationQrPath} alt="Register as a coach QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} />
+            <img src={coachRegistrationQrPath} alt="Register as a coach QR code" className="brand-qr-image" />
             <p className="muted">https://best-hiit-timer-portal.vercel.app/</p>
           </div>
           <div>
             <p><strong>Register as an athlete</strong></p>
-            {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Register as an athlete QR code" style={{ maxWidth: '240px', width: '100%', height: 'auto' }} /> : <p className="muted">No QR code generated yet.</p>}
+            {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Register as an athlete QR code" className="brand-qr-image" /> : <p className="muted">No QR code generated yet.</p>}
             <p className="muted">{timerUrl}</p>
             <button
               className="button"
