@@ -192,7 +192,7 @@ export function BrandingPage() {
           </div>
         </div>
       </div>
-      <div className="row">
+      <div className="row profile-actions">
         <button className="button" disabled={saveDisabled} onClick={() => void save()}>Save</button>
         <button className="button" disabled={publishDisabled} onClick={() => void publish()}>Publish</button>
         <button className="button" disabled={unpublishDisabled} onClick={() => void unpublish()}>Unpublish</button>
