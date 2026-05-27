@@ -36,6 +36,8 @@
   --radius-full: 999px;
 
   --focus-ring: 0 0 0 3px rgb(240 201 58 / 35%);
+  --mobile-shell-max-width: 430px;
+  --mobile-footer-reserved-space: calc(6.8rem + env(safe-area-inset-bottom));
 }
 
 * { box-sizing: border-box; }
@@ -215,7 +217,14 @@ input[type="file"] { padding: var(--space-2); }
 hr { border: 0; border-top: 1px solid var(--border-default); margin: var(--space-4) 0; }
 
 @media (max-width: 900px) {
-  .app-shell { grid-template-columns: 1fr; gap: var(--space-3); padding: var(--space-3); padding-bottom: calc(88px + env(safe-area-inset-bottom)); overflow-x: clip; }
+  .app-shell {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    padding-top: calc(var(--space-4) + env(safe-area-inset-top));
+    padding-bottom: var(--mobile-footer-reserved-space);
+    overflow-x: clip;
+  }
   .sidebar { gap: var(--space-2); }
   .sidebar .nav-list { display: none; }
   .sidebar .button { align-self: flex-start; }
@@ -228,18 +237,17 @@ hr { border: 0; border-top: 1px solid var(--border-default); margin: var(--space
   .asset-preview-grid { grid-template-columns: 1fr; }
   .mobile-footer-nav {
     position: fixed;
-    left: var(--space-3);
-    right: var(--space-3);
-    bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
     z-index: 20;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-2);
-    border: 1px solid #2f2a22;
-    border-radius: var(--radius-2xl);
-    padding: var(--space-2);
+    width: min(100%, var(--mobile-shell-max-width));
+    border-top: 1px solid #2f2a22;
+    padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom));
     background: #060606;
-    box-shadow: 0 10px 26px rgb(0 0 0 / 40%);
   }
   .mobile-tab-link {
     min-height: 4.25rem;
@@ -264,13 +272,5 @@ hr { border: 0; border-top: 1px solid var(--border-default); margin: var(--space
     background: #2b251d;
     color: #f0c93a;
     border-color: #4a3f2f;
-  }
-}
-
-@supports (-webkit-touch-callout: none) {
-  @media (max-width: 900px) {
-    .mobile-footer-nav {
-      bottom: calc(var(--space-3) + env(safe-area-inset-bottom) + 52px);
-    }
   }
 }
