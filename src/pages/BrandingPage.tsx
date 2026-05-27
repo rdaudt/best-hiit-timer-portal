@@ -131,12 +131,11 @@ export function BrandingPage() {
     }
   };
 
-  if (!branding) return <section className="panel page-section"><p>Loading branding...</p></section>;
+  if (!branding) return <section className="panel page-section"><p>Loading Profile...</p></section>;
   const dirty = baseline ? JSON.stringify(branding) !== JSON.stringify(baseline) : false;
   const saveDisabled = !dirty || isMutating;
   const publishDisabled = branding.status !== 'draft' || dirty || isMutating;
   const unpublishDisabled = branding.status !== 'published' || dirty || isMutating;
-  const openTimerDisabled = branding.status !== 'published' || dirty || isMutating;
   const timerUrl = `${timerBaseUrl}${branding.slug}`;
 
   return (
@@ -180,25 +179,16 @@ export function BrandingPage() {
         </div>
       </div>
       <div className="panel panel-subtle">
-        <h3>QR Code</h3>
         <div className="grid2">
           <div>
-            <p><strong>Register as a coach</strong></p>
+            <p><strong>Send someone to the Coach Portal</strong></p>
             <img src={coachRegistrationQrPath} alt="Register as a coach QR code" className="brand-qr-image" />
             <p className="muted">https://best-hiit-timer-portal.vercel.app/</p>
           </div>
           <div>
-            <p><strong>Register as an athlete</strong></p>
+            <p><strong>Send someone to the HIIT Timer app</strong></p>
             {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Register as an athlete QR code" className="brand-qr-image" /> : <p className="muted">No QR code generated yet.</p>}
             <p className="muted">{timerUrl}</p>
-            <button
-              className="button"
-              type="button"
-              disabled={openTimerDisabled}
-              onClick={() => window.open(timerUrl, '_blank', 'noopener,noreferrer')}
-            >
-              Register as an athlete
-            </button>
           </div>
         </div>
       </div>
@@ -212,7 +202,7 @@ export function BrandingPage() {
       <h3>Delete Profile</h3>
       <p className="muted">This disables your workspace and signs you out. Type <strong>{branding.slug}</strong> to confirm.</p>
       <div className="row">
-        <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value.toLowerCase())} placeholder="Type workspace slug" />
+        <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value.toLowerCase())} placeholder="Type coach identifier" />
         <button className="button danger" onClick={() => void deleteProfile()}>Delete Profile</button>
       </div>
     </section>
