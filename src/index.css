@@ -93,7 +93,7 @@ label {
   display: grid;
   gap: var(--space-1);
   font-size: 1rem;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-family: var(--font-display);
   font-weight: 800;
   letter-spacing: 0.015em;
