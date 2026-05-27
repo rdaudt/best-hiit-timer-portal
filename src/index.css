@@ -226,6 +226,7 @@ hr { border: 0; border-top: 1px solid var(--border-default); margin: var(--space
   .app-shell {
     min-height: 100dvh;
     grid-template-columns: 1fr;
+    align-content: start;
     gap: var(--space-3);
     padding: var(--space-3);
     padding-top: calc(var(--space-4) + env(safe-area-inset-top));
