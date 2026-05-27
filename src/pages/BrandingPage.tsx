@@ -180,12 +180,12 @@ export function BrandingPage() {
       </div>
       <div className="panel panel-subtle">
         <div className="grid2">
-          <div>
+          <div className="qr-panel">
             <p><strong>Send someone to the Coach Portal</strong></p>
             <img src={coachRegistrationQrPath} alt="Register as a coach QR code" className="brand-qr-image" />
             <p className="muted">https://best-hiit-timer-portal.vercel.app/</p>
           </div>
-          <div>
+          <div className="qr-panel">
             <p><strong>Send someone to the HIIT Timer app</strong></p>
             {branding.qrCodeUrl ? <img src={`/api/portal/branding?action=qr-image&t=${encodeURIComponent(branding.updatedAt)}`} alt="Register as an athlete QR code" className="brand-qr-image" /> : <p className="muted">No QR code generated yet.</p>}
             <p className="muted">{timerUrl}</p>
