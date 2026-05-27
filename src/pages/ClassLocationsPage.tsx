@@ -1,43 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { portalApi } from '../services/portalApi';
-import type { ClassLocation } from '../types/portal';
+import { queryKeys } from '../services/queryKeys';
 
 export function ClassLocationsPage() {
-  const [locations, setLocations] = useState<ClassLocation[]>([]);
+  const queryClient = useQueryClient();
+  const { data: locations = [], isLoading, error: queryError, isError } = useQuery({
+    queryKey: queryKeys.classLocations.list,
+    queryFn: portalApi.listClassLocations,
+  });
   const [error, setError] = useState('');
 
-  const load = async () => {
-    try {
-      setError('');
-      setLocations(await portalApi.listClassLocations());
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  };
+  const deleteMutation = useMutation({
+    mutationFn: portalApi.deleteClassLocation,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.classLocations.list });
+    },
+  });
 
-  useEffect(() => {
-    let active = true;
-    portalApi.listClassLocations()
-      .then((items) => {
-        if (!active) return;
-        setError('');
-        setLocations(items);
-      })
-      .catch((err: Error) => {
-        if (!active) return;
-        setError(err.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const defaultMutation = useMutation({
+    mutationFn: portalApi.setDefaultClassLocation,
+    onSuccess: async (_updated, id) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.classLocations.list });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.classLocations.detail(id) });
+    },
+  });
 
   const remove = async (id: string, label: string) => {
     if (!window.confirm(`Delete "${label}"?`)) return;
     try {
-      await portalApi.deleteClassLocation(id);
-      await load();
+      setError('');
+      await deleteMutation.mutateAsync(id);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -45,12 +39,15 @@ export function ClassLocationsPage() {
 
   const setDefault = async (id: string) => {
     try {
-      await portalApi.setDefaultClassLocation(id);
-      await load();
+      setError('');
+      await defaultMutation.mutateAsync(id);
     } catch (err) {
       setError((err as Error).message);
     }
   };
+
+  const loadError = isError ? (queryError as Error).message : '';
+  const displayError = error || loadError;
 
   return (
     <section className="panel page-section">
@@ -58,8 +55,12 @@ export function ClassLocationsPage() {
         <h2>Class Locations</h2>
         <Link className="button" to="/class-locations/new">Add Location</Link>
       </div>
-      {error && <p className="error" role="alert">{error}</p>}
-      {locations.length === 0
+      {displayError && <p className="error" role="alert">{displayError}</p>}
+      {isLoading && locations.length === 0
+        ? <p className="muted">Loading locations...</p>
+        : displayError
+        ? null
+        : locations.length === 0
         ? <p className="muted">No locations yet. Add your first class location.</p>
         : (
           <div className="table-scroll">

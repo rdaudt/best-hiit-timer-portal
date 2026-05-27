@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { portalApi } from '../services/portalApi';
 import type { Branding } from '../types/portal';
+import { queryKeys } from '../services/queryKeys';
 
 async function toBase64(file: File): Promise<string> {
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -13,42 +15,57 @@ export function BrandingPage() {
   const timerBaseUrl = 'https://best-hiit-timer.vercel.app/';
   const coachRegistrationQrPath = '/assets/portal-qr-code.png';
   const assetPreviewUrl = (url: string) => `/api/portal/branding?action=asset-image&url=${encodeURIComponent(url)}`;
-  const [branding, setBranding] = useState<Branding | null>(null);
-  const [baseline, setBaseline] = useState<Branding | null>(null);
+  const queryClient = useQueryClient();
+  const { data: brandingData, isLoading, error: brandingError } = useQuery({
+    queryKey: queryKeys.branding.current,
+    queryFn: portalApi.getBranding,
+  });
+  const [draftBranding, setDraftBranding] = useState<Branding | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [isMutating, setIsMutating] = useState(false);
+  const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    portalApi.getBranding()
-      .then((data) => {
-        if (active) {
-          setBranding(data);
-          setBaseline(data);
-        }
-      })
-      .catch((err: Error) => {
-        if (active) setError(err.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const saveMutation = useMutation({
+    mutationFn: (payload: Record<string, unknown>) => portalApi.saveBranding(payload),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.branding.current, updated);
+      setDraftBranding(updated);
+      setHasUnsavedEdits(false);
+      setMessage('Branding saved.');
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: portalApi.publishBranding,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.branding.current, updated);
+      setDraftBranding(updated);
+      setHasUnsavedEdits(false);
+      setMessage('Branding published.');
+    },
+  });
+
+  const unpublishMutation = useMutation({
+    mutationFn: portalApi.unpublishBranding,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.branding.current, updated);
+      setDraftBranding(updated);
+      setHasUnsavedEdits(false);
+      setMessage('Branding moved back to draft.');
+    },
+  });
 
   const save = async () => {
     if (!branding) return;
     try {
       setIsMutating(true);
       setError('');
-      const updated = await portalApi.saveBranding({
+      await saveMutation.mutateAsync({
         ...branding,
         expectedUpdatedAt: branding.updatedAt,
       });
-      setBranding(updated);
-      setBaseline(updated);
-      setMessage('Branding saved.');
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -60,10 +77,7 @@ export function BrandingPage() {
     try {
       setIsMutating(true);
       setError('');
-      const updated = await portalApi.publishBranding();
-      setBranding(updated);
-      setBaseline(updated);
-      setMessage('Branding published.');
+      await publishMutation.mutateAsync();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -75,10 +89,7 @@ export function BrandingPage() {
     try {
       setIsMutating(true);
       setError('');
-      const updated = await portalApi.unpublishBranding();
-      setBranding(updated);
-      setBaseline(updated);
-      setMessage('Branding moved back to draft.');
+      await unpublishMutation.mutateAsync();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -97,6 +108,8 @@ export function BrandingPage() {
       setMessage('');
       await portalApi.deleteBranding();
       await portalApi.logout();
+      queryClient.removeQueries({ queryKey: queryKeys.branding.current });
+      queryClient.removeQueries({ queryKey: queryKeys.auth.me });
       window.location.assign('/signin?deleted=1');
     } catch (err) {
       setError((err as Error).message);
@@ -121,8 +134,9 @@ export function BrandingPage() {
         ...nextBranding,
         expectedUpdatedAt: branding.updatedAt,
       });
-      setBranding(persisted);
-      setBaseline(persisted);
+      queryClient.setQueryData(queryKeys.branding.current, persisted);
+      setDraftBranding(persisted);
+      setHasUnsavedEdits(false);
       setMessage('Image uploaded and saved.');
     } catch (err) {
       setError((err as Error).message);
@@ -131,8 +145,18 @@ export function BrandingPage() {
     }
   };
 
-  if (!branding) return <section className="panel page-section"><p>Loading Profile...</p></section>;
+  const branding = hasUnsavedEdits ? draftBranding : (draftBranding ?? brandingData ?? null);
+  const baseline = brandingData ?? draftBranding;
+  const loadError = brandingError ? (brandingError as Error).message : '';
+  const displayError = error || loadError;
+
+  if (isLoading) return <section className="panel page-section"><p>Loading Profile...</p></section>;
+  if (!branding) return <section className="panel page-section">{displayError ? <p className="error" role="alert">{displayError}</p> : <p>Loading Profile...</p>}</section>;
   const dirty = baseline ? JSON.stringify(branding) !== JSON.stringify(baseline) : false;
+  const updateBranding = (next: Branding) => {
+    setHasUnsavedEdits(true);
+    setDraftBranding(next);
+  };
   const saveDisabled = !dirty || isMutating;
   const publishDisabled = branding.status !== 'draft' || dirty || isMutating;
   const unpublishDisabled = branding.status !== 'published' || dirty || isMutating;
@@ -141,17 +165,17 @@ export function BrandingPage() {
   return (
     <section className="panel page-section">
       {message && <p className="ok" role="status">{message}</p>}
-      {error && <p className="error" role="alert">{error}</p>}
+      {displayError && <p className="error" role="alert">{displayError}</p>}
       <div className="grid2">
-        <label>Coach Name<input value={branding.coachName} onChange={(e) => setBranding({ ...branding, coachName: e.target.value })} /></label>
-        <label>Business Name<input value={branding.businessName} onChange={(e) => setBranding({ ...branding, businessName: e.target.value })} /></label>
-        <label>Coach Identifier<input value={branding.slug} onChange={(e) => setBranding({ ...branding, slug: e.target.value.toLowerCase() })} /></label>
+        <label>Coach Name<input value={branding.coachName} onChange={(e) => updateBranding({ ...branding, coachName: e.target.value })} /></label>
+        <label>Business Name<input value={branding.businessName} onChange={(e) => updateBranding({ ...branding, businessName: e.target.value })} /></label>
+        <label>Coach Identifier<input value={branding.slug} onChange={(e) => updateBranding({ ...branding, slug: e.target.value.toLowerCase() })} /></label>
       </div>
-      <label>Header Tagline<input value={branding.headerTagline} onChange={(e) => setBranding({ ...branding, headerTagline: e.target.value })} /></label>
+      <label>Header Tagline<input value={branding.headerTagline} onChange={(e) => updateBranding({ ...branding, headerTagline: e.target.value })} /></label>
       <div className="grid2">
-        <label>Instagram Username<input value={branding.igUsername} onChange={(e) => setBranding({ ...branding, igUsername: e.target.value.replace(/^@/, '') })} placeholder="yourusername" /></label>
+        <label>Instagram Username<input value={branding.igUsername} onChange={(e) => updateBranding({ ...branding, igUsername: e.target.value.replace(/^@/, '') })} placeholder="yourusername" /></label>
       </div>
-      <label>Bio<textarea className="bio-textarea" value={branding.bio} onChange={(e) => setBranding({ ...branding, bio: e.target.value })} /></label>
+      <label>Bio<textarea className="bio-textarea" value={branding.bio} onChange={(e) => updateBranding({ ...branding, bio: e.target.value })} /></label>
       <div className="asset-preview-grid">
         <div className="asset-preview-card">
           <p>Business Logo</p>

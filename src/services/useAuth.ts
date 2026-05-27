@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, createElement, useContext, type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from './queryKeys';
 
 export type AuthUser = {
   sub: string;
@@ -6,9 +8,10 @@ export type AuthUser = {
   workspaceSlug: string;
 };
 
-type AuthState = {
+type AuthContextValue = {
   isLoading: boolean;
   user: AuthUser | null;
+  refresh: () => Promise<AuthUser | null>;
 };
 
 async function fetchSession(): Promise<AuthUser | null> {
@@ -20,35 +23,36 @@ async function fetchSession(): Promise<AuthUser | null> {
   return data.user;
 }
 
-export function useAuth() {
-  const [state, setState] = useState<AuthState>({ isLoading: true, user: null });
+const AuthContext = createContext<AuthContextValue | null>(null);
 
-  const refresh = useCallback(async () => {
-    try {
-      const next = await fetchSession();
-      setState({ isLoading: false, user: next });
-    } catch {
-      setState({ isLoading: false, user: null });
-    }
-  }, []);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
+  const authQuery = useQuery({
+    queryKey: queryKeys.auth.me,
+    queryFn: fetchSession,
+    staleTime: 10 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    let active = true;
-    fetchSession()
-      .then((user) => {
-        if (active) {
-          setState({ isLoading: false, user });
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setState({ isLoading: false, user: null });
-        }
+  const value: AuthContextValue = {
+    isLoading: authQuery.isLoading,
+    user: authQuery.data ?? null,
+    refresh: async () => {
+      const result = await queryClient.fetchQuery({
+        queryKey: queryKeys.auth.me,
+        queryFn: fetchSession,
+        staleTime: 0,
       });
-    return () => {
-      active = false;
-    };
-  }, [refresh]);
+      return result ?? null;
+    },
+  };
 
-  return { ...state, refresh };
+  return createElement(AuthContext.Provider, { value }, children);
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider.');
+  }
+  return context;
 }

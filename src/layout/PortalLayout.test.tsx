@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { PortalLayout } from './PortalLayout';
@@ -17,13 +18,15 @@ describe('PortalLayout', () => {
     });
 
     render(
-      <MemoryRouter initialEntries={['/branding']}>
-        <Routes>
-          <Route path="/" element={<PortalLayout />}>
-            <Route path="branding" element={<div>Branding content</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>,
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={['/branding']}>
+          <Routes>
+            <Route path="/" element={<PortalLayout />}>
+              <Route path="branding" element={<div>Branding content</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const mobileNav = screen.getByRole('navigation', { name: 'Mobile Navigation' });
