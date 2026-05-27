@@ -158,20 +158,27 @@ export function BrandingPage() {
         <div className="asset-preview-card">
           <p>Logo</p>
           {branding.logoUrl ? <img src={assetPreviewUrl(branding.logoUrl)} alt="Uploaded logo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+          <label className="asset-upload-label">
+            Upload Logo
+            <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} />
+          </label>
         </div>
         <div className="asset-preview-card">
           <p>Coach Photo</p>
           {branding.coachPhotoUrl ? <img src={assetPreviewUrl(branding.coachPhotoUrl)} alt="Uploaded coach photo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+          <label className="asset-upload-label">
+            Upload Coach Photo
+            <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-photo', f); }} />
+          </label>
         </div>
         <div className="asset-preview-card">
           <p>Coach Header Image</p>
           {branding.coachHeaderImageUrl ? <img src={assetPreviewUrl(branding.coachHeaderImageUrl)} alt="Uploaded coach header preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
+          <label className="asset-upload-label">
+            Upload Header Image
+            <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-header-image', f); }} />
+          </label>
         </div>
-      </div>
-      <div className="row">
-        <label>Logo<input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('logo', f); }} /></label>
-        <label>Coach Photo<input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-photo', f); }} /></label>
-        <label>Coach Header Image<input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload('coach-header-image', f); }} /></label>
       </div>
       <div className="panel panel-subtle">
         <h3>QR Code</h3>

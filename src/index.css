@@ -129,11 +129,18 @@ input[type="file"] { padding: var(--space-2); }
   border-radius: var(--radius-lg);
   background: var(--surface-2);
   padding: 0.6rem;
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
 }
 
 .asset-preview-card p {
-  margin: 0 0 0.45rem;
+  margin: 0;
   font-weight: 600;
+}
+
+.asset-upload-label {
+  margin-top: var(--space-1);
 }
 
 .asset-preview-image,
