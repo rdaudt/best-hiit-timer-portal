@@ -141,6 +141,7 @@ input[type="file"] { padding: var(--space-2); }
 .table-scroll .table { min-width: 720px; }
 .actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 .actions button { border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-secondary); border-radius: var(--radius-md); padding: 0.35rem 0.5rem; min-height: 2.2rem; }
+.delete-icon { font-size: 1.15rem; line-height: 1; }
 
 .asset-preview-grid {
   display: grid;

@@ -71,7 +71,6 @@ export function ClassLocationsPage() {
                   <th>Location</th>
                   <th>Logo</th>
                   <th>Default</th>
-                  <th>Updated</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -92,14 +91,13 @@ export function ClassLocationsPage() {
                           <button className="button-small" onClick={() => void setDefault(loc.id)}>Set as Default</button>
                         )}
                     </td>
-                    <td>{loc.updatedAt}</td>
                     <td className="actions">
                       <button
                         aria-label={`Delete ${loc.businessName} ${loc.locationName}`}
                         title="Delete"
                         onClick={() => void remove(loc.id, `${loc.businessName} – ${loc.locationName}`)}
                       >
-                        <span aria-hidden="true">🗑</span>
+                        <span className="delete-icon" aria-hidden="true">🗑</span>
                       </button>
                     </td>
                   </tr>
