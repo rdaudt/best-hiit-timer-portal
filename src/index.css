@@ -98,6 +98,7 @@ select {
   min-width: 0;
 }
 input, textarea, select { min-height: 3rem; border: 1px solid var(--border-default); border-radius: var(--radius-xl); padding: 0.65rem 0.75rem; font: inherit; color: var(--text-primary); background: var(--surface-2); }
+input, textarea, select { font-weight: 400; }
 textarea { min-height: 84px; }
 input[type="checkbox"] { min-height: auto; width: 1rem; height: 1rem; border-radius: var(--radius-sm); accent-color: var(--accent-500); }
 input[type="file"] { padding: var(--space-2); }

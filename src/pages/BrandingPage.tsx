@@ -141,7 +141,6 @@ export function BrandingPage() {
 
   return (
     <section className="panel page-section">
-      <h2>Profile &amp; Branding</h2>
       {message && <p className="ok" role="status">{message}</p>}
       {error && <p className="error" role="alert">{error}</p>}
       <div className="grid2">
