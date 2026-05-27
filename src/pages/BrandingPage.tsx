@@ -144,18 +144,18 @@ export function BrandingPage() {
       {message && <p className="ok" role="status">{message}</p>}
       {error && <p className="error" role="alert">{error}</p>}
       <div className="grid2">
-        <label>Workspace Slug<input value={branding.slug} onChange={(e) => setBranding({ ...branding, slug: e.target.value.toLowerCase() })} /></label>
-        <label>Business Name<input value={branding.businessName} onChange={(e) => setBranding({ ...branding, businessName: e.target.value })} /></label>
         <label>Coach Name<input value={branding.coachName} onChange={(e) => setBranding({ ...branding, coachName: e.target.value })} /></label>
+        <label>Business Name<input value={branding.businessName} onChange={(e) => setBranding({ ...branding, businessName: e.target.value })} /></label>
+        <label>Coach Identifier<input value={branding.slug} onChange={(e) => setBranding({ ...branding, slug: e.target.value.toLowerCase() })} /></label>
       </div>
       <label>Header Tagline<input value={branding.headerTagline} onChange={(e) => setBranding({ ...branding, headerTagline: e.target.value })} /></label>
       <div className="grid2">
         <label>Instagram Username<input value={branding.igUsername} onChange={(e) => setBranding({ ...branding, igUsername: e.target.value.replace(/^@/, '') })} placeholder="yourusername" /></label>
       </div>
-      <label>Bio<textarea value={branding.bio} onChange={(e) => setBranding({ ...branding, bio: e.target.value })} /></label>
+      <label>Bio<textarea className="bio-textarea" value={branding.bio} onChange={(e) => setBranding({ ...branding, bio: e.target.value })} /></label>
       <div className="asset-preview-grid">
         <div className="asset-preview-card">
-          <p>Logo</p>
+          <p>Business Logo</p>
           {branding.logoUrl ? <img src={assetPreviewUrl(branding.logoUrl)} alt="Uploaded logo preview" className="asset-preview-image" /> : <div className="asset-preview-placeholder">No image</div>}
           <label className="asset-upload-label">
             Upload Logo
