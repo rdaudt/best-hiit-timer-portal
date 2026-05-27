@@ -4,6 +4,11 @@ type TokenResponse = {
   id_token: string;
 };
 
+type OidcStatePayload = {
+  redirect: string;
+  invite?: string;
+};
+
 const googleJwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 
 const requireEnv = (name: string): string => {
@@ -16,7 +21,21 @@ const requireEnv = (name: string): string => {
 
 const getBaseUrl = () => requireEnv('APP_BASE_URL').replace(/\/$/, '');
 
-export function buildGoogleAuthUrl(state: string, redirect = '/') {
+const encodeStatePayload = (payload: OidcStatePayload) => Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+
+export const decodeStatePayload = (encoded: string): OidcStatePayload | null => {
+  try {
+    const raw = Buffer.from(encoded, 'base64url').toString('utf8');
+    const parsed = JSON.parse(raw) as Partial<OidcStatePayload>;
+    const redirect = typeof parsed.redirect === 'string' ? parsed.redirect : '/';
+    const invite = typeof parsed.invite === 'string' ? parsed.invite : undefined;
+    return { redirect, invite };
+  } catch {
+    return null;
+  }
+};
+
+export function buildGoogleAuthUrl(state: string, redirect = '/', invite = '') {
   const clientId = requireEnv('GOOGLE_CLIENT_ID');
   const callbackUrl = `${getBaseUrl()}/api/auth/callback`;
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
@@ -24,7 +43,7 @@ export function buildGoogleAuthUrl(state: string, redirect = '/') {
   url.searchParams.set('redirect_uri', callbackUrl);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('scope', 'openid email profile');
-  url.searchParams.set('state', `${state}:${encodeURIComponent(redirect)}`);
+  url.searchParams.set('state', `${state}:${encodeStatePayload({ redirect, invite: invite || undefined })}`);
   url.searchParams.set('access_type', 'offline');
   url.searchParams.set('prompt', 'select_account');
   return url.toString();

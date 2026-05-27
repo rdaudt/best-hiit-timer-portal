@@ -84,6 +84,34 @@ CREATE TABLE IF NOT EXISTS coach_templates (
   updated_by_email TEXT
 );
 
+CREATE TABLE IF NOT EXISTS coach_class_locations (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  business_name TEXT NOT NULL,
+  location_name TEXT NOT NULL,
+  logo_url TEXT NOT NULL DEFAULT '',
+  is_default INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  updated_by_google_sub TEXT,
+  updated_by_email TEXT,
+  UNIQUE (tenant_id, business_name, location_name)
+);
+
+CREATE TABLE IF NOT EXISTS coach_invite_codes (
+  id TEXT PRIMARY KEY,
+  code_hash TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'active',
+  issued_to_email TEXT,
+  created_at TEXT NOT NULL,
+  expires_at TEXT,
+  used_at TEXT,
+  used_by_google_sub TEXT,
+  used_by_email TEXT,
+  consumed_workspace_id TEXT
+);
+
 CREATE TABLE IF NOT EXISTS analytics_events (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL,
@@ -115,7 +143,10 @@ CREATE INDEX IF NOT EXISTS idx_coach_tenants_slug ON coach_tenants (slug);
 CREATE INDEX IF NOT EXISTS idx_coach_tenants_owner_sub ON coach_tenants (owner_google_sub);
 CREATE INDEX IF NOT EXISTS idx_coach_tenants_slug_status ON coach_tenants (slug, status);
 CREATE INDEX IF NOT EXISTS idx_coach_social_links_tenant_sort ON coach_social_links (tenant_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_coach_class_locations_tenant_sort ON coach_class_locations (tenant_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_coach_templates_tenant_status_sort ON coach_templates (tenant_id, status, sort_order);
+CREATE INDEX IF NOT EXISTS idx_coach_invites_hash_status ON coach_invite_codes (code_hash, status);
+CREATE INDEX IF NOT EXISTS idx_coach_invites_status_expires ON coach_invite_codes (status, expires_at);
 CREATE INDEX IF NOT EXISTS idx_analytics_events_name ON analytics_events (event_name);
 CREATE INDEX IF NOT EXISTS idx_analytics_events_tenant_time ON analytics_events (tenant_id, occurred_at);
 CREATE INDEX IF NOT EXISTS idx_analytics_rollup_tenant_day ON analytics_rollup_daily (tenant_id, day_utc);

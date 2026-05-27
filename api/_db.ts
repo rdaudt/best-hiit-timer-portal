@@ -1,5 +1,5 @@
+import { createHash, randomUUID } from 'node:crypto';
 import { createClient } from '@libsql/client';
-import { randomUUID } from 'node:crypto';
 
 let cachedClient: ReturnType<typeof createClient> | null = null;
 
@@ -122,6 +122,22 @@ export async function createCoachTenantTablesIfNeeded() {
     `,
     `CREATE INDEX IF NOT EXISTS idx_class_locations_tenant ON coach_class_locations(tenant_id, sort_order, updated_at);`,
     `CREATE UNIQUE INDEX IF NOT EXISTS uq_class_locations_tenant_names ON coach_class_locations(tenant_id, LOWER(business_name), LOWER(location_name));`,
+    `
+      CREATE TABLE IF NOT EXISTS coach_invite_codes (
+        id TEXT PRIMARY KEY,
+        code_hash TEXT NOT NULL UNIQUE,
+        status TEXT NOT NULL DEFAULT 'active',
+        issued_to_email TEXT,
+        created_at TEXT NOT NULL,
+        expires_at TEXT,
+        used_at TEXT,
+        used_by_google_sub TEXT,
+        used_by_email TEXT,
+        consumed_workspace_id TEXT
+      );
+    `,
+    `CREATE INDEX IF NOT EXISTS idx_coach_invites_hash_status ON coach_invite_codes(code_hash, status);`,
+    `CREATE INDEX IF NOT EXISTS idx_coach_invites_status_expires ON coach_invite_codes(status, expires_at);`,
   ], 'write');
 
   await addColumnIfMissing('coach_tenants', "bio TEXT NOT NULL DEFAULT ''", 'bio');
@@ -291,4 +307,80 @@ export async function updateWorkspaceQrCodeUrl(workspaceId: string, qrCodeUrl: s
     sql: `UPDATE coach_tenants SET qr_code_url = ?, updated_at = ? WHERE id = ?`,
     args: [qrCodeUrl, new Date().toISOString(), workspaceId],
   });
+}
+
+export function normalizeInviteCode(rawCode: string) {
+  return rawCode.trim().toLowerCase();
+}
+
+export function hashInviteCode(rawCode: string) {
+  return createHash('sha256').update(normalizeInviteCode(rawCode)).digest('hex');
+}
+
+export async function findActiveInviteByCode(rawCode: string) {
+  const normalized = normalizeInviteCode(rawCode);
+  if (!normalized) {
+    return { status: 'missing' as const, invite: null };
+  }
+
+  const db = getDb();
+  const result = await db.execute({
+    sql: `
+      SELECT id, status, expires_at
+      FROM coach_invite_codes
+      WHERE code_hash = ?
+      LIMIT 1
+    `,
+    args: [hashInviteCode(normalized)],
+  });
+
+  const row = result.rows[0] as Record<string, unknown> | undefined;
+  if (!row) {
+    return { status: 'invalid' as const, invite: null };
+  }
+
+  const status = String(row.status);
+  if (status !== 'active') {
+    return { status: status === 'used' ? ('used' as const) : ('invalid' as const), invite: null };
+  }
+
+  const expiresAt = row.expires_at ? new Date(String(row.expires_at)) : null;
+  if (expiresAt && Number.isFinite(expiresAt.getTime()) && expiresAt.getTime() < Date.now()) {
+    return { status: 'expired' as const, invite: null };
+  }
+
+  return {
+    status: 'ok' as const,
+    invite: {
+      id: String(row.id),
+    },
+  };
+}
+
+export async function consumeInvite(
+  inviteId: string,
+  identity: { sub: string; email: string },
+  workspaceId: string,
+) {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const result = await db.execute({
+    sql: `
+      UPDATE coach_invite_codes
+      SET
+        status = 'used',
+        used_at = ?,
+        used_by_google_sub = ?,
+        used_by_email = ?,
+        consumed_workspace_id = ?
+      WHERE
+        id = ?
+        AND status = 'active'
+        AND used_at IS NULL
+        AND (expires_at IS NULL OR expires_at >= ?)
+    `,
+    args: [now, identity.sub, identity.email, workspaceId, inviteId, now],
+  });
+
+  return Number(result.rowsAffected ?? 0) === 1;
 }

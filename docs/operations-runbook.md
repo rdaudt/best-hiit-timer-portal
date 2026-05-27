@@ -25,6 +25,39 @@
 - Analytics summary is coach-session scoped by tenant id.
 - Analytics rollup endpoint is cron-secret protected.
 
+## Coach Invite Codes (POC)
+- Invites are managed directly in SQL only; there is no admin endpoint/UI.
+- Codes are case-insensitive and trimmed before hashing.
+- Only hash values are stored in `coach_invite_codes.code_hash`.
+- Codes are consumed once after successful first-time workspace provisioning.
+
+### Create Invite
+```sql
+INSERT INTO coach_invite_codes (id, code_hash, status, issued_to_email, created_at, expires_at)
+VALUES (
+  lower(hex(randomblob(16))),
+  '<precomputed_sha256_hex_of_normalized_code>',
+  'active',
+  'coach@example.com',
+  datetime('now'),
+  datetime('now', '+14 days')
+);
+```
+
+### Revoke Invite
+```sql
+UPDATE coach_invite_codes
+SET status = 'revoked'
+WHERE id = '<invite-id>';
+```
+
+### List Invite Status
+```sql
+SELECT id, status, issued_to_email, created_at, expires_at, used_at, used_by_email, consumed_workspace_id
+FROM coach_invite_codes
+ORDER BY created_at DESC;
+```
+
 ## Cron
 - Schedule a daily request to `GET or POST /api/portal/analytics-rollup`
 - Header: `Authorization: Bearer <CRON_SECRET>`
@@ -37,3 +70,4 @@
 4. Create/edit/publish/archive a template.
 5. Ingest a test analytics event and run rollup.
 6. Confirm dashboard metrics update for the selected date range.
+
