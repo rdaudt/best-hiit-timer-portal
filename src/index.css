@@ -96,6 +96,9 @@ label {
   color: var(--text-primary);
   font-weight: 700;
 }
+label:has(> input:not([type="checkbox"]), > textarea, > select) {
+  text-indent: 0.75rem;
+}
 label,
 input,
 textarea,
