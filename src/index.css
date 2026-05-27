@@ -217,18 +217,29 @@ input[type="file"] { padding: var(--space-2); }
 hr { border: 0; border-top: 1px solid var(--border-default); margin: var(--space-4) 0; }
 
 @media (max-width: 900px) {
+  html,
+  body,
+  #root {
+    min-height: 100dvh;
+  }
+
   .app-shell {
+    min-height: 100dvh;
     grid-template-columns: 1fr;
     gap: var(--space-3);
     padding: var(--space-3);
     padding-top: calc(var(--space-4) + env(safe-area-inset-top));
-    padding-bottom: var(--mobile-footer-reserved-space);
+    padding-bottom: var(--space-3);
     overflow-x: clip;
   }
   .sidebar { gap: var(--space-2); }
   .sidebar .nav-list { display: none; }
   .sidebar .button { align-self: flex-start; }
-  .content { gap: var(--space-3); min-width: 0; }
+  .content {
+    gap: var(--space-3);
+    min-width: 0;
+    padding-bottom: var(--mobile-footer-reserved-space);
+  }
   .page-section { width: 100%; min-width: 0; overflow-x: clip; }
   .panel { padding: var(--space-3); }
   .row.spread { align-items: flex-start; }
