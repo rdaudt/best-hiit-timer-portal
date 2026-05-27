@@ -164,7 +164,8 @@ input[type="file"] { padding: var(--space-2); }
 
 .asset-upload-label {
   margin-top: var(--space-1);
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   cursor: pointer;
 }
 
