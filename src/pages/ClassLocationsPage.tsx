@@ -6,7 +6,7 @@ import { queryKeys } from '../services/queryKeys';
 
 export function ClassLocationsPage() {
   const queryClient = useQueryClient();
-  const { data: locations = [], isLoading } = useQuery({
+  const { data: locations = [], isLoading, error: queryError, isError } = useQuery({
     queryKey: queryKeys.classLocations.list,
     queryFn: portalApi.listClassLocations,
   });
@@ -46,15 +46,20 @@ export function ClassLocationsPage() {
     }
   };
 
+  const loadError = isError ? (queryError as Error).message : '';
+  const displayError = error || loadError;
+
   return (
     <section className="panel page-section">
       <div className="row spread">
         <h2>Class Locations</h2>
         <Link className="button" to="/class-locations/new">Add Location</Link>
       </div>
-      {error && <p className="error" role="alert">{error}</p>}
+      {displayError && <p className="error" role="alert">{displayError}</p>}
       {isLoading && locations.length === 0
         ? <p className="muted">Loading locations...</p>
+        : displayError
+        ? null
         : locations.length === 0
         ? <p className="muted">No locations yet. Add your first class location.</p>
         : (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { portalApi } from '../services/portalApi';
@@ -25,24 +25,30 @@ export function ClassLocationEditorPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isNew = id === 'new';
-  const { data: locationData } = useQuery({
+  const { data: locationData, error: locationError } = useQuery({
     queryKey: queryKeys.classLocations.detail(id),
     queryFn: () => portalApi.getClassLocation(id),
     enabled: !isNew,
   });
-  const [form, setForm] = useState<FormState>(emptyForm());
+
+  const [draftForm, setDraftForm] = useState<FormState>(emptyForm());
   const [error, setError] = useState('');
   const [isMutating, setIsMutating] = useState(false);
+  const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false);
 
-  useEffect(() => {
-    if (!locationData) return;
-    setForm({
+  const serverForm = useMemo(() => {
+    if (!locationData) return null;
+    return {
       businessName: locationData.businessName,
       locationName: locationData.locationName,
       logoUrl: locationData.logoUrl,
       isDefault: locationData.isDefault,
-    });
+    };
   }, [locationData]);
+
+  const form = isNew
+    ? draftForm
+    : (hasUnsavedEdits ? draftForm : (serverForm ?? draftForm));
 
   const createMutation = useMutation({
     mutationFn: portalApi.createClassLocation,
@@ -82,7 +88,7 @@ export function ClassLocationEditorPage() {
           locationId: id,
           payload: { businessName: form.businessName, locationName: form.locationName, logoUrl: form.logoUrl },
         });
-        setError('');
+        setHasUnsavedEdits(false);
       }
     } catch (err) {
       setError((err as Error).message);
@@ -103,7 +109,8 @@ export function ClassLocationEditorPage() {
         locationId: id,
         payload: { businessName: next.businessName, locationName: next.locationName, logoUrl: next.logoUrl },
       });
-      setForm(next);
+      setHasUnsavedEdits(false);
+      setDraftForm(next);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -116,7 +123,8 @@ export function ClassLocationEditorPage() {
       setIsMutating(true);
       setError('');
       await defaultMutation.mutateAsync(id);
-      setForm((f) => ({ ...f, isDefault: true }));
+      setHasUnsavedEdits(false);
+      setDraftForm((f) => ({ ...f, isDefault: true }));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -124,19 +132,24 @@ export function ClassLocationEditorPage() {
     }
   };
 
+  const displayError = error || (locationError ? (locationError as Error).message : '');
+
   return (
     <section className="panel page-section">
       <div className="row spread">
         <h2>{isNew ? 'Add Location' : 'Edit Location'}</h2>
         <Link to="/class-locations">Back</Link>
       </div>
-      {error && <p className="error">{error}</p>}
+      {displayError && <p className="error">{displayError}</p>}
       <div className="grid2">
         <label>
           Business Name
           <input
             value={form.businessName}
-            onChange={(e) => setForm({ ...form, businessName: e.target.value })}
+            onChange={(e) => {
+              setHasUnsavedEdits(true);
+              setDraftForm({ ...form, businessName: e.target.value });
+            }}
             placeholder="e.g. Infinity Fitness"
           />
         </label>
@@ -144,7 +157,10 @@ export function ClassLocationEditorPage() {
           Location
           <input
             value={form.locationName}
-            onChange={(e) => setForm({ ...form, locationName: e.target.value })}
+            onChange={(e) => {
+              setHasUnsavedEdits(true);
+              setDraftForm({ ...form, locationName: e.target.value });
+            }}
             placeholder="e.g. Mission, BC"
           />
         </label>
