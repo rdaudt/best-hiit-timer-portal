@@ -266,3 +266,11 @@ hr { border: 0; border-top: 1px solid var(--border-default); margin: var(--space
     border-color: #4a3f2f;
   }
 }
+
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 900px) {
+    .mobile-footer-nav {
+      bottom: calc(var(--space-3) + env(safe-area-inset-bottom) + 52px);
+    }
+  }
+}
