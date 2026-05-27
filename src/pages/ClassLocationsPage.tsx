@@ -94,7 +94,13 @@ export function ClassLocationsPage() {
                     </td>
                     <td>{loc.updatedAt}</td>
                     <td className="actions">
-                      <button onClick={() => void remove(loc.id, `${loc.businessName} – ${loc.locationName}`)}>Delete</button>
+                      <button
+                        aria-label={`Delete ${loc.businessName} ${loc.locationName}`}
+                        title="Delete"
+                        onClick={() => void remove(loc.id, `${loc.businessName} – ${loc.locationName}`)}
+                      >
+                        <span aria-hidden="true">🗑</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
