@@ -13,7 +13,7 @@ export function PortalLayout() {
   return (
     <div className="app-shell">
       <aside className="sidebar panel">
-        <h1>HIIT Portal</h1>
+        <h1>COACH PORTAL</h1>
         <p className="muted">{user?.email}</p>
         <nav className="nav-list" aria-label="Primary Navigation">
           <NavLink to="/branding" className="nav-link">Profile</NavLink>

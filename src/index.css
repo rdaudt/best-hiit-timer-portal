@@ -89,7 +89,7 @@ p { margin: 0 0 var(--space-2); }
 .row { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-bottom: var(--space-3); }
 .spread { justify-content: space-between; }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-3); }
-label { display: grid; gap: var(--space-1); font-size: 1rem; color: var(--text-secondary); }
+label { display: grid; gap: var(--space-1); font-size: 1rem; color: var(--text-secondary); font-weight: 700; }
 label,
 input,
 textarea,
