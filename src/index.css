@@ -235,34 +235,34 @@ hr { border: 0; border-top: 1px solid var(--border-default); margin: var(--space
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-2);
-    border: 1px solid var(--border-strong);
+    border: 1px solid #2f2a22;
     border-radius: var(--radius-2xl);
     padding: var(--space-2);
-    background: color-mix(in srgb, var(--surface-1) 88%, #000 12%);
-    box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+    background: #060606;
+    box-shadow: 0 10px 26px rgb(0 0 0 / 40%);
   }
   .mobile-tab-link {
-    min-height: 3rem;
+    min-height: 4.25rem;
     border-radius: var(--radius-lg);
-    border: 1px solid var(--border-default);
-    background: var(--surface-2);
-    color: var(--text-secondary);
+    border: 1px solid transparent;
+    background: transparent;
+    color: #a4a7ac;
     text-decoration: none;
     display: inline-flex;
     justify-content: center;
     align-items: center;
     font-family: var(--font-display);
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     transition: 140ms ease;
   }
-  .mobile-tab-link:hover { border-color: var(--accent-700); color: var(--text-primary); }
+  .mobile-tab-link:hover { border-color: #3c3327; color: #d5d7da; }
   .mobile-tab-link:active { transform: translateY(1px); }
   .mobile-tab-link.active {
-    background: linear-gradient(140deg, var(--accent-700) 0%, var(--accent-400) 100%);
-    color: #181204;
-    border-color: transparent;
+    background: #2b251d;
+    color: #f0c93a;
+    border-color: #4a3f2f;
   }
 }
