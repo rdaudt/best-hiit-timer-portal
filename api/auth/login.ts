@@ -16,7 +16,8 @@ export default async function handler(req: NodeReq, res: NodeRes) {
   }
 
   const redirect = typeof req.query?.redirect === 'string' ? req.query.redirect : '/';
+  const invite = typeof req.query?.invite === 'string' ? req.query.invite : '';
   const stateCookie = createStateCookie();
   res.setHeader('Set-Cookie', stateCookie.header);
-  res.redirect(302, buildGoogleAuthUrl(stateCookie.value, redirect));
+  res.redirect(302, buildGoogleAuthUrl(stateCookie.value, redirect, invite));
 }
