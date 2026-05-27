@@ -15,7 +15,7 @@ export function PortalLayout() {
       <aside className="sidebar panel">
         <h1>HIIT Portal</h1>
         <p className="muted">{user?.email}</p>
-        <nav className="nav-list">
+        <nav className="nav-list" aria-label="Primary Navigation">
           <NavLink to="/branding" className="nav-link">Profile</NavLink>
           <NavLink to="/class-locations" className="nav-link">Class Locations</NavLink>
         </nav>

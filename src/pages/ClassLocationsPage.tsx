@@ -58,7 +58,7 @@ export function ClassLocationsPage() {
         <h2>Class Locations</h2>
         <Link className="button" to="/class-locations/new">Add Location</Link>
       </div>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       {locations.length === 0
         ? <p className="muted">No locations yet. Add your first class location.</p>
         : (
@@ -80,7 +80,7 @@ export function ClassLocationsPage() {
                   <td>{loc.locationName}</td>
                   <td>
                     {loc.logoUrl
-                      ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(loc.logoUrl)}`} alt={`${loc.businessName} logo`} style={{ height: '32px', width: 'auto', verticalAlign: 'middle' }} />
+                      ? <img src={`/api/portal/branding?action=asset-image&url=${encodeURIComponent(loc.logoUrl)}`} alt={`${loc.businessName} logo`} className="table-logo" />
                       : <span className="muted">&mdash;</span>}
                   </td>
                   <td>
