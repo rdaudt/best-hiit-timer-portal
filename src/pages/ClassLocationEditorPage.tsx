@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { portalApi } from '../services/portalApi';
+import { queryKeys } from '../services/queryKeys';
 
 async function toBase64(file: File): Promise<string> {
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -21,31 +23,65 @@ const emptyForm = (): FormState => ({ businessName: '', locationName: '', logoUr
 export function ClassLocationEditorPage() {
   const { id = 'new' } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const isNew = id === 'new';
+  const { data: locationData } = useQuery({
+    queryKey: queryKeys.classLocations.detail(id),
+    queryFn: () => portalApi.getClassLocation(id),
+    enabled: !isNew,
+  });
   const [form, setForm] = useState<FormState>(emptyForm());
   const [error, setError] = useState('');
   const [isMutating, setIsMutating] = useState(false);
 
   useEffect(() => {
-    if (id === 'new') return;
-    void (async () => {
-      try {
-        const data = await portalApi.getClassLocation(id);
-        setForm({ businessName: data.businessName, locationName: data.locationName, logoUrl: data.logoUrl, isDefault: data.isDefault });
-      } catch (err) {
-        setError((err as Error).message);
-      }
-    })();
-  }, [id]);
+    if (!locationData) return;
+    setForm({
+      businessName: locationData.businessName,
+      locationName: locationData.locationName,
+      logoUrl: locationData.logoUrl,
+      isDefault: locationData.isDefault,
+    });
+  }, [locationData]);
+
+  const createMutation = useMutation({
+    mutationFn: portalApi.createClassLocation,
+    onSuccess: async (created) => {
+      queryClient.setQueryData(queryKeys.classLocations.detail(created.id), created);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.classLocations.list });
+      navigate(`/class-locations/${created.id}`, { replace: true });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ locationId, payload }: { locationId: string; payload: Record<string, unknown> }) =>
+      portalApi.updateClassLocation(locationId, payload),
+    onSuccess: (updated, variables) => {
+      queryClient.setQueryData(queryKeys.classLocations.detail(variables.locationId), updated);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.classLocations.list });
+    },
+  });
+
+  const defaultMutation = useMutation({
+    mutationFn: portalApi.setDefaultClassLocation,
+    onSuccess: async (updated, locationId) => {
+      queryClient.setQueryData(queryKeys.classLocations.detail(locationId), updated);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.classLocations.list });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.classLocations.detail(locationId) });
+    },
+  });
 
   const save = async () => {
     try {
       setIsMutating(true);
       setError('');
-      if (id === 'new') {
-        const created = await portalApi.createClassLocation({ businessName: form.businessName, locationName: form.locationName, logoUrl: '' });
-        navigate(`/class-locations/${created.id}`, { replace: true });
+      if (isNew) {
+        await createMutation.mutateAsync({ businessName: form.businessName, locationName: form.locationName, logoUrl: '' });
       } else {
-        await portalApi.updateClassLocation(id, { businessName: form.businessName, locationName: form.locationName, logoUrl: form.logoUrl });
+        await updateMutation.mutateAsync({
+          locationId: id,
+          payload: { businessName: form.businessName, locationName: form.locationName, logoUrl: form.logoUrl },
+        });
         setError('');
       }
     } catch (err) {
@@ -63,7 +99,10 @@ export function ClassLocationEditorPage() {
       const dataBase64 = await toBase64(file);
       const uploaded = await portalApi.uploadAsset({ assetType: `class-location-${id}`, filename: file.name, contentType: file.type, dataBase64 });
       const next = { ...form, logoUrl: uploaded.url };
-      await portalApi.updateClassLocation(id, { businessName: next.businessName, locationName: next.locationName, logoUrl: next.logoUrl });
+      await updateMutation.mutateAsync({
+        locationId: id,
+        payload: { businessName: next.businessName, locationName: next.locationName, logoUrl: next.logoUrl },
+      });
       setForm(next);
     } catch (err) {
       setError((err as Error).message);
@@ -76,7 +115,7 @@ export function ClassLocationEditorPage() {
     try {
       setIsMutating(true);
       setError('');
-      await portalApi.setDefaultClassLocation(id);
+      await defaultMutation.mutateAsync(id);
       setForm((f) => ({ ...f, isDefault: true }));
     } catch (err) {
       setError((err as Error).message);
@@ -84,8 +123,6 @@ export function ClassLocationEditorPage() {
       setIsMutating(false);
     }
   };
-
-  const isNew = id === 'new';
 
   return (
     <section className="panel page-section">
