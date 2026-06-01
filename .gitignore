@@ -31,3 +31,8 @@ client_secret_*.apps.googleusercontent.com.json
 backend-setup-values.txt
 
 .env*.local
+
+# Local design exploration artifacts
+design.md
+design-tokens.json
+tailwind-theme.ts

@@ -6,6 +6,7 @@ export type AuthUser = {
   sub: string;
   email: string;
   workspaceSlug: string;
+  picture?: string;
 };
 
 type AuthContextValue = {

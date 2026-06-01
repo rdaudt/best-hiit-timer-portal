@@ -151,7 +151,12 @@ export default async function handler(req: NodeReq, res: NodeRes) {
 
     const redirectTo = payload.redirect || '/';
     res.setHeader('Set-Cookie', [
-      createSessionCookie({ sub: identity.sub, email: identity.email, workspaceSlug: workspace.workspaceSlug }),
+      createSessionCookie({
+        sub: identity.sub,
+        email: identity.email,
+        workspaceSlug: workspace.workspaceSlug,
+        ...(identity.picture ? { picture: identity.picture } : {}),
+      }),
       clearStateCookie,
     ]);
     res.redirect(302, redirectTo.startsWith('/') ? redirectTo : '/');

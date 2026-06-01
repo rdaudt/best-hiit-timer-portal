@@ -69,7 +69,7 @@ Reference schema: [docs/turso-schema.sql](./docs/turso-schema.sql)
 Key fields:
 
 - Identity: `id`, `slug`, `owner_google_sub`, `owner_email`
-- Branding payload: `business_name`, `coach_name`, `bio`, `logo_url`, `coach_photo_url`, `coach_header_image_url`, `header_tagline`, `qr_code_url`, theme colors, headline
+- Branding payload: `business_name`, `coach_name`, `bio`, `logo_url`, `coach_photo_url`, `coach_header_image_url`, `header_tagline`, `qr_code_url`, `ig_username`, `tiktok_username`, theme colors, headline
 - Lifecycle: `status` (`draft|published`), `published_at`
 - Soft delete: `deleted_at`, `deleted_by_google_sub`, `deleted_by_email`
 - Audit: `updated_at`, `updated_by_google_sub`, `updated_by_email`
@@ -156,13 +156,21 @@ Portal (session required):
 
 - `GET /api/portal/workspace`
 - `GET /api/portal/branding`
+- `GET /api/portal/branding?action=asset-image&url={url}`
+- `GET /api/portal/branding?action=qr-image`
 - `PUT /api/portal/branding`
-- `POST /api/portal/branding?action=publish|unpublish|delete`
+- `POST /api/portal/branding?action=publish|unpublish|delete|regenerate-qr`
 - `GET /api/portal/templates?status=all|draft|published|archived`
 - `POST /api/portal/templates`
-- `GET /api/portal/template?id={templateId}`
-- `PUT /api/portal/template?id={templateId}`
-- `POST /api/portal/template?id={templateId}&action=publish|archive|unarchive|duplicate`
+- `GET /api/portal/templates?id={templateId}`
+- `PUT /api/portal/templates?id={templateId}`
+- `POST /api/portal/templates?id={templateId}&action=publish|archive|unarchive|duplicate`
+- `GET /api/portal/class-locations`
+- `POST /api/portal/class-locations`
+- `GET /api/portal/class-locations?id={locationId}`
+- `PUT /api/portal/class-locations?id={locationId}`
+- `DELETE /api/portal/class-locations?id={locationId}`
+- `PATCH /api/portal/class-locations?id={locationId}` (set as default)
 - `POST /api/portal/assets-upload`
 - `GET /api/portal/analytics-summary?dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD`
 

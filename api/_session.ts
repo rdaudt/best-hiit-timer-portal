@@ -6,6 +6,7 @@ export type SessionUser = {
   sub: string;
   email: string;
   workspaceSlug: string;
+  picture?: string;
 };
 
 type SessionPayload = SessionUser & {
@@ -85,6 +86,7 @@ export function parseSession(req: { headers?: Record<string, string | string[] |
       sub: payload.sub,
       email: payload.email,
       workspaceSlug: payload.workspaceSlug,
+      picture: typeof payload.picture === 'string' ? payload.picture : undefined,
     };
   } catch {
     return null;
