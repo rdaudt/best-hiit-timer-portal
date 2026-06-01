@@ -49,33 +49,35 @@ export function PortalLayout() {
   return (
     <div className="app-shell">
       <aside className="sidebar panel">
-        <h1>COACH PORTAL</h1>
+        <div className="portal-topbar">
+          <h1>COACH PORTAL</h1>
+          <div className="portal-user-menu" ref={menuRef}>
+            <button
+              type="button"
+              className="portal-avatar-button"
+              aria-label="Open account menu"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((value) => !value)}
+            >
+              {user?.picture
+                ? <img src={user.picture} alt="Authenticated user profile" className="portal-avatar-image" />
+                : <span className="portal-avatar-fallback">{(user?.email?.[0] ?? 'U').toUpperCase()}</span>}
+            </button>
+            {menuOpen ? (
+              <div className="portal-user-dropdown panel" role="menu" aria-label="Account menu">
+                <p className="portal-user-email">{user?.email}</p>
+                <button className="button" onClick={() => void onSignOut()}>Sign out</button>
+              </div>
+            ) : null}
+          </div>
+        </div>
         <nav className="nav-list" aria-label="Primary Navigation">
           <NavLink to="/branding" className="nav-link" onMouseEnter={() => void prefetchBranding()} onFocus={() => void prefetchBranding()} onTouchStart={() => void prefetchBranding()}>Profile</NavLink>
           <NavLink to="/class-locations" className="nav-link" onMouseEnter={() => void prefetchClassLocations()} onFocus={() => void prefetchClassLocations()} onTouchStart={() => void prefetchClassLocations()}>Class Locations</NavLink>
         </nav>
       </aside>
       <main className="content">
-        <div className="portal-user-menu" ref={menuRef}>
-          <button
-            type="button"
-            className="portal-avatar-button"
-            aria-label="Open account menu"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((value) => !value)}
-          >
-            {user?.picture
-              ? <img src={user.picture} alt="Authenticated user profile" className="portal-avatar-image" />
-              : <span className="portal-avatar-fallback">{(user?.email?.[0] ?? 'U').toUpperCase()}</span>}
-          </button>
-          {menuOpen ? (
-            <div className="portal-user-dropdown panel" role="menu" aria-label="Account menu">
-              <p className="portal-user-email">{user?.email}</p>
-              <button className="button" onClick={() => void onSignOut()}>Sign out</button>
-            </div>
-          ) : null}
-        </div>
         <Outlet />
       </main>
       <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
