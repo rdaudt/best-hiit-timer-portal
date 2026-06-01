@@ -99,8 +99,8 @@ p { margin: 0 0 var(--space-2); }
   z-index: 25;
 }
 .portal-avatar-button {
-  width: 3rem;
-  height: 3rem;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
