@@ -160,7 +160,7 @@ select {
   max-width: 100%;
   min-width: 0;
 }
-input, textarea, select { min-height: 3rem; border: 1px solid var(--border-default); border-radius: var(--radius-xl); padding: 0.65rem 0.75rem; font: inherit; color: var(--text-primary); background: var(--surface-2); }
+input, textarea, select { min-height: 3rem; border: 1px solid var(--border-strong); border-radius: var(--radius-xl); padding: 0.65rem 0.75rem; font: inherit; color: var(--text-primary); background: var(--surface-2); }
 input, textarea, select { font-weight: 400; }
 textarea { min-height: 84px; }
 .bio-textarea { min-height: 168px; }
