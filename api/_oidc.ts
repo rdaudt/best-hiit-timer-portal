@@ -35,7 +35,7 @@ export const decodeStatePayload = (encoded: string): OidcStatePayload | null => 
   }
 };
 
-export function buildGoogleAuthUrl(state: string, redirect = '/', invite = '') {
+export function buildGoogleAuthUrl(state: string, redirect = '/') {
   const clientId = requireEnv('GOOGLE_CLIENT_ID');
   const callbackUrl = `${getBaseUrl()}/api/auth/callback`;
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
@@ -43,7 +43,7 @@ export function buildGoogleAuthUrl(state: string, redirect = '/', invite = '') {
   url.searchParams.set('redirect_uri', callbackUrl);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('scope', 'openid email profile');
-  url.searchParams.set('state', `${state}:${encodeStatePayload({ redirect, invite: invite || undefined })}`);
+  url.searchParams.set('state', `${state}:${encodeStatePayload({ redirect })}`);
   url.searchParams.set('access_type', 'offline');
   url.searchParams.set('prompt', 'select_account');
   return url.toString();

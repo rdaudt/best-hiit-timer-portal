@@ -1,9 +1,7 @@
 import { decodeStatePayload, exchangeCodeForIdentity } from '../_oidc.js';
 import {
-  consumeInvite,
   createCoachTenantTablesIfNeeded,
   createWorkspaceForOwner,
-  findActiveInviteByCode,
   findWorkspaceByGoogleSub,
   updateWorkspaceQrCodeUrl,
   workspaceSlugExists,
@@ -66,11 +64,6 @@ function buildInitialCoachName(identity: { familyName?: string; fullName?: strin
 
 const clearStateCookie = 'oidc_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
 
-const redirectInviteFailure = (res: NodeRes, reason: 'missing' | 'invalid' | 'expired' | 'used') => {
-  res.setHeader('Set-Cookie', clearStateCookie);
-  res.redirect(302, `/signin?invite_error=${reason}`);
-};
-
 export default async function handler(req: NodeReq, res: NodeRes) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -98,18 +91,6 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     let workspace = await findWorkspaceByGoogleSub(identity.sub);
 
     if (!workspace) {
-      const inviteCode = payload.invite?.trim() ?? '';
-      if (!inviteCode) {
-        redirectInviteFailure(res, 'missing');
-        return;
-      }
-
-      const inviteLookup = await findActiveInviteByCode(inviteCode);
-      if (inviteLookup.status !== 'ok' || !inviteLookup.invite) {
-        redirectInviteFailure(res, inviteLookup.status);
-        return;
-      }
-
       try {
         const slug = await generateAvailableSlug(identity.email);
         workspace = await createWorkspaceForOwner({
@@ -136,12 +117,6 @@ export default async function handler(req: NodeReq, res: NodeRes) {
           throw error;
         }
         workspace = latest;
-      }
-
-      const consumed = await consumeInvite(inviteLookup.invite.id, identity, workspace.workspaceId);
-      if (!consumed) {
-        redirectInviteFailure(res, 'used');
-        return;
       }
     }
 
