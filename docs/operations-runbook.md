@@ -58,6 +58,33 @@ FROM coach_invite_codes
 ORDER BY created_at DESC;
 ```
 
+## Coach Purge / Test Reset
+Use this when you need to fully remove a coach so the same Google account can register again during testing.
+
+### Command
+```bash
+npm run remove:coach -- --email coach@example.com --dry-run
+npm run remove:coach -- --email coach@example.com --yes
+```
+
+### What it removes
+- Resolves the target by normalized `coach_tenants.owner_email`.
+- Soft-deletes the workspace immediately, then hard-deletes it at the end.
+- Deletes tenant-scoped rows from `coach_templates`, `coach_class_locations`, `coach_social_links` when present, `analytics_events`, and `analytics_rollup_daily`.
+- Deletes invite-code rows tied to the email or consumed workspace.
+- Deletes `content_jobs` rows whose stored blob path or URL points at `tenants/<workspaceId>/`.
+- Deletes every Vercel Blob object under `tenants/<workspaceId>/`, including branding images and QR code blobs.
+
+### Preflight
+1. Run the dry run first and confirm the resolved workspace id/slug is the one you expect.
+2. If more than one `coach_tenants` row matches the email, stop and resolve the ambiguity manually.
+3. Make sure `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, and `BLOB_READ_WRITE_TOKEN` point at the correct environment.
+
+### Postflight
+1. Confirm the email no longer resolves to a `coach_tenants` row.
+2. Confirm `vercel blob list --prefix tenants/<workspaceId>/` returns no blobs.
+3. Re-register the coach with the same Google account.
+
 ## Cron
 - Schedule a daily request to `GET or POST /api/portal/analytics-rollup`
 - Header: `Authorization: Bearer <CRON_SECRET>`
